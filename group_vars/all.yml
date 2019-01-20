@@ -6,7 +6,7 @@ php7_ini_directives_fpm:
   upload_max_filesize: "8M"
   post_max_size: "8M"
 
-php7_version: 7.2
+php7_version: 7.3
 php7_enable_fpm: yes
 
 php7_versioned_extensions:
@@ -56,4 +56,4 @@ certbot_auto_renew_hour: 1
 certbot_auto_renew_minute: 13
 certbot_admin_email: markmeijerman@gmail.com
 certbot_auto_renew: no  # we use our own task
-certbot_auto_renew_options: "--quiet --no-self-upgrade --deploy-hook 'sudo service nginx reload'"
+certbot_auto_renew_options: "--quiet --no-self-upgrade --renew-hook 'sudo service nginx reload'"
