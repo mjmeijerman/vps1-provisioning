@@ -59,7 +59,7 @@ php7_fpm_pool_user: vagrant
 php7_fpm_pool_group: vagrant
 
 php7_extensions:
-#  - xdebug
+  - xdebug
   - memcached
 
 # MySQL
