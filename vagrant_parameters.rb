@@ -14,9 +14,9 @@
 #
 
 $synced_projects = [
-
+    "jurymatch",
 ]
 
 $synced_folders = {
-
+    "/vagrant/jurymatch" => "/Users/mark/Sites/jurymatch.nl",
 }
