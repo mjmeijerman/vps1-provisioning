@@ -1,5 +1,13 @@
 ---
 
+- name: Install bower
+  npm: name=bower state=present global=yes
+  become: yes
+
+- name: Install grunt
+  npm: name=grunt-cli state=present global=yes
+  become: yes
+
 - name: Import develop tasks
   import_tasks: "develop.yml"
   when: "'develop' in group_names"

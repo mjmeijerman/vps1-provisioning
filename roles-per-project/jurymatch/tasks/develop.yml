@@ -17,6 +17,15 @@
 - name: Composer install
   command: composer install --no-interaction --prefer-source --no-scripts --working-dir=/vagrant/jurymatch
 
+- name: NPM install
+  command: npm install chdir=/vagrant/jurymatch
+
+- name: Bower packages install
+  command: bower install chdir=/vagrant/jurymatch
+
+- name: Build assets
+  command: grunt dev chdir=/vagrant/jurymatch
+
 - name: Install assets
   command: bin/console assets:install public --symlink chdir=/vagrant/jurymatch
 
