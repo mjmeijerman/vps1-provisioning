@@ -15,8 +15,10 @@
 
 $synced_projects = [
     "jurymatch",
+    "gymnastics-competition-system-api",
 ]
 
 $synced_folders = {
-    "/vagrant/jurymatch" => "/Path/to/jurymatch.nl",
+    "/vagrant/jurymatch"                         => "/Path/to/jurymatch.nl",
+    "/vagrant/gymnastics-competition-system-api" => "/Path/to/gymnastics-competition-system-api",
 }

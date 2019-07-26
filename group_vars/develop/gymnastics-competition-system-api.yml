@@ -1,0 +1,24 @@
+nginx_server_templates_jurysysteem_api:
+  - name: gymnastics-competition-system-api
+    src: "{{ inventory_dir }}/roles/webserver/templates/http.conf.j2"
+    ssl: off
+    index: index.php
+    web_root: "{{ project_root}}/gymnastics-competition-system-api/public"
+    domains:
+      - "api.jurysysteem.loc"
+    headers:
+      Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-inline' https://code.jquery.com https://maxcdn.bootstrapcdn.com; style-src 'self' 'unsafe-inline' https://maxcdn.bootstrapcdn.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://maxcdn.bootstrapcdn.com data:"
+
+jurysysteem_api_db_user:     'jurysysteem_api'
+jurysysteem_api_db_password: 'jurysysteem_api'
+
+mariadb_databases_jurysysteem_api:
+  - 'jurysysteem_api'
+
+mariadb_users_jurysysteem_api:
+  - {
+    name:     "{{ jurysysteem_api_db_user }}",
+    password: "{{ jurysysteem_api_db_password }}",
+    priv:     "jurysysteem_api.*:ALL",
+    host:     "%"
+  }
