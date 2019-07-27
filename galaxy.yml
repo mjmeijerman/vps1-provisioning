@@ -10,7 +10,6 @@
 - src: f500.memcached
 - src: f500.ufw
 - src: f500.vim
-- src: f500.nodejs
 
 - src: HanXHX.mysql
 - src: geerlingguy.certbot

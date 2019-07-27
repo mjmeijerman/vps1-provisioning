@@ -30,6 +30,7 @@ php7_fpm_pool_catch_workers_output: yes
 
 # MYSQL
 
+mariadb_version: '10.4'
 mariadb_config_template: "{{ inventory_dir }}/roles/webserver/templates/my.cnf.j2"
 mariadb_max_allowed_packet:      "64M"
 mariadb_innodb_buffer_pool_size: 592M
