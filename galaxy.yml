@@ -12,5 +12,6 @@
 - src: f500.vim
 
 - src: HanXHX.mysql
+  version: 1.1.0
 - src: geerlingguy.certbot
 - src: geerlingguy.mailhog

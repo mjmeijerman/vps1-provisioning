@@ -11,7 +11,7 @@
   file: path=/dev/shm/jurysysteem_api/var/logs/ recurse=yes group=vagrant owner=vagrant state=directory
   become: yes
 
-- name: Copy the parameters distfile
+- name: Copy the env file
   command: cp /vagrant/gymnastics-competition-system-api/.env.dist /vagrant/gymnastics-competition-system-api/.env creates=/vagrant/gymnastics-competition-system-api/.env
 
 - name: Composer install
