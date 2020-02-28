@@ -14,7 +14,7 @@ nginx_http_params:
   sendfile: off # fixes issue to reload javascript files after changes
 nginx_user: vagrant
 nginx_group: vagrant
-nginx_server_templates: "{{ nginx_server_templates_jurymatch + nginx_server_templates_jurysysteem_api}}"
+nginx_server_templates: "{{ nginx_server_templates_dg_doorstroming + nginx_server_templates_jurymatch + nginx_server_templates_jurysysteem_api}}"
 nginx_www_dir: "/var/www"
 
 # UFW
