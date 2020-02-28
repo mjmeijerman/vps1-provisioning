@@ -12,5 +12,8 @@
   file: path=/dev/shm/dg-doorstroming/var/logs/ recurse=yes group=vagrant owner=vagrant state=directory
   become: yes
 
+- name: Copy the env file
+  command: cp /vagrant/dg-doorstroming/.env.dist /vagrant/dg-doorstroming/.env creates=/vagrant/dg-doorstroming/.env
+
 - name: Composer install
   command: composer install --no-interaction --prefer-source --no-scripts --working-dir=/vagrant/dg-doorstroming

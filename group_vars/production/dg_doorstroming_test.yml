@@ -1,0 +1,9 @@
+nginx_server_templates_dg_doorstroming_test:
+  - name: dg-doorstroming
+    src: "{{ inventory_dir }}/roles/webserver/templates/https.conf.j2"
+    index: index.php
+    web_root: "{{ project_root}}/doorstroming_test.jurysysteem.nl/current/public"
+    domains:
+      - "doorstroming-test.jurysysteem.nl"
+    headers:
+      Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-inline' https://code.jquery.com https://maxcdn.bootstrapcdn.com; style-src 'self' 'unsafe-inline' https://maxcdn.bootstrapcdn.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://maxcdn.bootstrapcdn.com data:"

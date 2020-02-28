@@ -10,7 +10,7 @@ ssh_provision_user: "provision"
 # NGINX
 nginx_user:         www-data
 nginx_group:        www-data
-server_templates:   "{{ nginx_server_templates_jurymatch_test + nginx_server_templates_jurymatch }}"
+server_templates:   "{{ nginx_server_templates_dg_doorstroming_test + nginx_server_templates_dg_doorstroming + nginx_server_templates_jurymatch_test + nginx_server_templates_jurymatch }}"
 
 nginx_http_params:
   client_max_body_size: "8M"
