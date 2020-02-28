@@ -1,8 +1,8 @@
 nginx_server_templates_dg_doorstroming_test:
-  - name: dg-doorstroming
+  - name: dg_doorstroming_test
     src: "{{ inventory_dir }}/roles/webserver/templates/https.conf.j2"
     index: index.php
-    web_root: "{{ project_root}}/doorstroming_test.jurysysteem.nl/current/public"
+    web_root: "{{ project_root}}/doorstroming-test.jurysysteem.nl/current/public"
     domains:
       - "doorstroming-test.jurysysteem.nl"
     headers:
