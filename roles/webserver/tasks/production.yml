@@ -17,3 +17,15 @@
 
 - name: write sudoers for user
   template: src={{ inventory_dir }}/roles/webserver/templates/sudoers.j2 dest=/etc/sudoers.d/{{ deploy_user }} validate='visudo -cf %s'
+
+- name: Add cron job for removing generated files doorstroming project production
+  cron:
+    name: "clean_up_generated_doorstroming_production_excel_files"
+    job: "find /home/deploy/doorstroming.jurysysteem.nl/current/var/uploadedScores/* -mtime +7 -exec rm {} \\;"
+    hour: "23"
+
+- name: Add cron job for removing generated files doorstroming project test
+  cron:
+    name: "clean_up_generated_doorstroming_test_excel_files"
+    job: "find /home/deploy/doorstroming-test.jurysysteem.nl/current/var/uploadedScores/* -mtime +7 -exec rm {} \\;"
+    hour: "23"
