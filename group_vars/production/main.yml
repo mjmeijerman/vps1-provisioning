@@ -10,7 +10,7 @@ ssh_provision_user: "provision"
 # NGINX
 nginx_user:         www-data
 nginx_group:        www-data
-server_templates:   "{{ nginx_server_templates_dg_doorstroming_test + nginx_server_templates_dg_doorstroming + nginx_server_templates_jurymatch_test + nginx_server_templates_jurymatch }}"
+server_templates:   "{{ nginx_server_templates_dg_doorstroming_test + nginx_server_templates_dg_doorstroming + nginx_server_templates_jurymatch_test + nginx_server_templates_jurymatch + nginx_server_templates_speurtocht }}"
 
 nginx_http_params:
   client_max_body_size: "8M"
@@ -72,5 +72,5 @@ php7_extensions:
 mariadb_bind_address:          "127.0.0.1"
 mariadb_root_password:         ~ # Placed in secure.yml
 
-mariadb_databases: "{{ mariadb_databases_jurymatch_test + mariadb_databases_jurymatch }}"
-mariadb_users: "{{ mariadb_users_jurymatch_test + mariadb_users_jurymatch }}"
+mariadb_databases: "{{ mariadb_databases_jurymatch_test + mariadb_databases_jurymatch + mariadb_databases_speurtocht }}"
+mariadb_users: "{{ mariadb_users_jurymatch_test + mariadb_users_jurymatch + mariadb_users_speurtocht }}"

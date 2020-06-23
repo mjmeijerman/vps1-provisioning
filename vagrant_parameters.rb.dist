@@ -15,8 +15,10 @@
 
 $synced_projects = [
     "dg-doorstroming",
+    "speurtocht",
 ]
 
 $synced_folders = {
     "/vagrant/dg-doorstroming" => "/Users/mark/Sites/dg-doorstroming",
+    "/vagrant/speurtocht" => "/Users/mark/Sites/speurtocht",
 }
