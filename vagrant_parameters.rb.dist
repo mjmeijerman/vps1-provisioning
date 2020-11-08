@@ -14,11 +14,13 @@
 #
 
 $synced_projects = [
+    "jurysysteem",
     "dg-doorstroming",
     "speurtocht",
 ]
 
 $synced_folders = {
-    "/vagrant/dg-doorstroming" => "/Users/mark/Sites/dg-doorstroming",
-    "/vagrant/speurtocht" => "/Users/mark/Sites/speurtocht",
+    "/vagrant/jurysysteem" => "/Users/mark/sites/jurysysteem",
+    "/vagrant/dg-doorstroming" => "/Users/mark/sites/dg-doorstroming",
+    "/vagrant/speurtocht" => "/Users/mark/sites/speurtocht",
 }

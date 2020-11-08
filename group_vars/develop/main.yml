@@ -14,40 +14,36 @@ nginx_http_params:
   sendfile: off # fixes issue to reload javascript files after changes
 nginx_user: vagrant
 nginx_group: vagrant
-nginx_server_templates: "{{ nginx_server_templates_dg_doorstroming + nginx_server_templates_jurymatch + nginx_server_templates_speurtocht }}"
+nginx_server_templates: "{{ nginx_server_templates_dg_doorstroming + nginx_server_templates_jurymatch + nginx_server_templates_speurtocht + nginx_server_templates_jurysysteem }}"
 nginx_www_dir: "/var/www"
+nginx_dhparam_bits: 256
 
 # UFW
-ufw_default_policy:
-  - { direction: "incoming", policy: "deny" }
 
 ufw_rules_to_create:
-  - to_port: 22 # ssh
+  - to_port: 22
     rule: allow
-  - to_port: 80 # Nginx
+  - to_port: 80
     rule: allow
-  - to_port: 8025 # MailHog web interface
+  - to_port: 1025
     rule: allow
-  - to_port: 3306 # Database connection
+  - to_port: 1080
+    rule: allow
+  - to_port: 8025
+    rule: allow
+  - to_port: 3306
     rule: allow
 
 # PHP 7
 php7_ini_directives_global:
-  disable_functions:      "passthru, system, popen"
-  allow_url_fopen:        1
-  session.save_path:      "/dev/shm/shared/var/sessions"
-  session.cookie_secure:  0
-  session.gc_probability: 1
-  session.gc_divisor:     1000
-  session.gc_maxlifetime: 3600
+  allow_url_fopen: 1
   always_populate_raw_post_data: "-1"
-  mail_sendmail_path:     "{{ mailhog_install_dir }}/mhsendmail"
+  date.timezone: "Europe/Amsterdam"
+  disable_functions: "passthru, popen, curl_multi_exec"
   display_errors: "On"
   display_startup_errors: "On"
-  xdebug.profiler_enable: 1
-  xdebug.remote_enable: 1
-  xdebug.remote_connect_back: 1
-  xdebug.idekey: "PHPSTORM"
+  mail_sendmail_path: "{{ mailhog_install_dir }}/mhsendmail"
+
   opcache_fast_shutdown: 0
   opcache_interned_strings_buffer: 16
   opcache_max_accelerated_files: 10240
@@ -55,16 +51,42 @@ php7_ini_directives_global:
   opcache_revalidate_freq: 0
   opcache_validate_timestamps: 1
 
+  session.cookie_secure: 0
+  session.gc_probability: 1
+  session.gc_divisor: 1000
+  session.gc_maxlifetime: 3600
+  session.save_path: "/dev/shm/shared/var/sessions"
+
+  xdebug.idekey: "PHPSTORM"
+  xdebug.remote_connect_back: 1
+  xdebug.remote_enable: 1
+  xdebug.remote_host: "192.168.56.1"
+
+php7_ini_directives_fpm:
+  xdebug.profiler_enable: 1
+
 php7_fpm_pool_user: vagrant
 php7_fpm_pool_group: vagrant
 
-php7_extensions:
+php7_versioned_extensions:
+  - intl
+  - curl
+  - mysql
+  - gd
+  - xml
+  - mbstring
+  - bcmath
+  - zip
+  - amqp
   - xdebug
+
+php7_extensions:
   - memcached
 
 # MySQL
 mariadb_bind_address:  "127.0.0.1"
 mariadb_root_password: "root"
+mariadb_innodb_buffer_pool_size: 592M
 
-mariadb_databases: "{{ mariadb_databases_jurymatch + mariadb_databases_speurtocht }}"
-mariadb_users: "{{ mariadb_users_jurymatch + mariadb_users_speurtocht }}"
+mariadb_databases: "{{ mariadb_databases_jurymatch + mariadb_databases_speurtocht + mariadb_databases_jurysysteem }}"
+mariadb_users: "{{ mariadb_users_jurymatch + mariadb_users_speurtocht + mariadb_users_jurysysteem }}"

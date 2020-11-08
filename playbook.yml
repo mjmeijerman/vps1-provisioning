@@ -13,10 +13,19 @@
     - f500.nginx
     - f500.locale
     - f500.ufw
+    - f500.supervisord
     - f500.memcached
     - f500.php7
     - f500.php_composer
     - f500.vim
+    - f500.debian
+    - rockandska.erlang
+    - geerlingguy.rabbitmq
+    - rabbitmq-management
+
+  tasks:
+    - name: write custom mariadb conf file
+      template: src=my.cnf.j2 dest=/etc/mysql/mariadb.conf.d/90-my.cnf
 
 - name: Import roles per project for develop
   hosts: "develop"
@@ -24,7 +33,7 @@
   become: yes
 
   roles:
-      - geerlingguy.mailhog
+    - { role: 'geerlingguy.mailhog' }
 
 - name: Import roles per project for develop
   hosts: "develop"
@@ -36,6 +45,13 @@
       include_role:
         name: '{{ item }}'
       loop: '{{ synced_projects }}'
+
+    - name: Add supervisord group to vagrant user
+      become: yes
+      user:
+        name: vagrant
+        group: supervisord
+        append: yes
 
 - name: Production roles
   hosts: "production"

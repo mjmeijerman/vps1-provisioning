@@ -40,8 +40,26 @@ mariadb_key_buffer_size: 32M
 mariadb_query_cache_size: 0
 mariadb_innodb_log_file_size: 128M
 mariadb_wait_timeout: 600
-mariadb_slow_query_log_enabled: false
+mariadb_slow_query_log_enabled: true
 mariadb_long_query_time: 2
+
+mariadb_origin: default
+mariadb_vendor: mariadb
+
+mariadb_bind_address: "{{ global_db_ip }}"
+mariadb_port: 3306
+mariadb_socket: /var/run/mysqld/mysqld.sock
+
+mariadb_error_log: "/var/log/mysql/error.log"
+mariadb_slow_query_log: "/var/log/mysql/mysql_slow.log"
+
+bashrc_users:
+  - "provision"
+
+apt_packages:
+  - acl
+  - git
+  - build-essential
 
 # NGINX
 nginx_www_dir: "/var/www"
@@ -62,3 +80,11 @@ certbot_create_command: "{{ certbot_script }} certonly --webroot --webroot-path 
 certbot_create_if_missing: yes
 certbot_admin_email: markmeijerman@gmail.com
 certbot_auto_renew: no  # we use our own task
+
+erlang_series: 22
+rabbitmq_version: "3.8.9"
+rabbitmq_deb: "rabbitmq-server_{{ rabbitmq_version }}-1_all.deb"
+rabbitmq_deb_url: "https://github.com/rabbitmq/rabbitmq-server/releases/download/v{{ rabbitmq_version }}/{{ rabbitmq_deb }}"
+
+supervisord_unix_http_server_socket_mode: "0660"
+supervisord_log_fatal_state_to_syslog: true

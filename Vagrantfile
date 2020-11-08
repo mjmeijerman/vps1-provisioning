@@ -9,12 +9,12 @@ require_relative "vagrant_parameters.rb"
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     config.vm.define "vps1.markmeijerman.loc", primary: true do |vps1|
-        vps1.vm.box = "f500/debian-stretch64"
+        vps1.vm.box = "f500/debian-buster64"
         vps1.vm.network :private_network, ip: "192.168.20.104"
 
         vps1.vm.synced_folder ".", "/vagrant", disabled: true
         $synced_folders.each do |mountpoint, local_path|
-            vps1.vm.synced_folder local_path, mountpoint
+            vps1.vm.synced_folder local_path, mountpoint, nfs: true
         end
 
         vps1.ssh.insert_key = false
