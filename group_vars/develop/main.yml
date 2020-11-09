@@ -69,15 +69,15 @@ php7_fpm_pool_user: vagrant
 php7_fpm_pool_group: vagrant
 
 php7_versioned_extensions:
+  - zip
   - intl
   - curl
   - mysql
   - gd
   - xml
   - mbstring
-  - bcmath
-  - zip
   - amqp
+  - bcmath
   - xdebug
 
 php7_extensions:

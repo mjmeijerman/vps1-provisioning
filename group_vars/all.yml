@@ -17,6 +17,8 @@ php7_versioned_extensions:
   - gd
   - xml
   - mbstring
+  - amqp
+  - bcmath
 
 php7_fpm_pool_enabled: yes
 php7_fpm_pool_name: www
