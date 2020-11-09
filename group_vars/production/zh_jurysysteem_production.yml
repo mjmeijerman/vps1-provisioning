@@ -1,0 +1,24 @@
+nginx_server_templates_zh_jurysysteem_production:
+  - name: zh_jurysysteem_production
+    src: "{{ inventory_dir }}/roles/webserver/templates/https.conf.j2"
+    index: index.php
+    web_root: "{{ project_root}}/zh.jurysysteem.nl/current/public"
+    domains:
+      - "zh.jurysysteem.nl"
+    headers:
+      Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-inline' https://code.jquery.com https://maxcdn.bootstrapcdn.com; style-src 'self' 'unsafe-inline' https://maxcdn.bootstrapcdn.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://maxcdn.bootstrapcdn.com data:"
+    rabbitmq_enabled: true
+
+zh_jurysysteem_production_db_user:     ~ # Placed in secure.yml
+zh_jurysysteem_production_db_password: ~ # Placed in secure.yml
+
+mariadb_databases_zh_jurysysteem_production:
+  - 'zh-jurysysteem-prod'
+
+mariadb_users_zh_jurysysteem_production:
+  - {
+    name:     "{{ zh_jurysysteem_production_db_user }}",
+    password: "{{ zh_jurysysteem_production_db_password }}",
+    priv:     "{{ zh_jurysysteem_production_db_user }}.*:ALL",
+    host:     "%"
+  }
