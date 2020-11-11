@@ -14,6 +14,9 @@
 - name: Add supervisord group to deploy user
   user: name={{ deploy_user }} groups=supervisord append=yes
 
+- name: Create the supervisor logs folder
+  file: path=/home/logs/supervisor state=directory owner={{ deploy_user }} group={{ deploy_user }} recurse=yes
+
 - name: Add personal authorized key to deploy user
   authorized_key: user={{ deploy_user }} key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
 

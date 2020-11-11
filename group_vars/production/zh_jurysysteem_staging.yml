@@ -6,14 +6,14 @@ nginx_server_templates_zh_jurysysteem_staging:
     domains:
       - "zh-staging.jurysysteem.nl"
     headers:
-      Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-inline' https://code.jquery.com https://maxcdn.bootstrapcdn.com; style-src 'self' 'unsafe-inline' https://maxcdn.bootstrapcdn.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://maxcdn.bootstrapcdn.com data:"
+      Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-inline' https://code.jquery.com https://stackpath.bootstrapcdn.com https://cdn.jsdelivr.net  ; style-src 'self' 'unsafe-inline' https://stackpath.bootstrapcdn.com; font-src 'self' data:"
     rabbitmq_enabled: true
 
 zh_jurysysteem_staging_db_user:     ~ # Placed in secure.yml
 zh_jurysysteem_staging_db_password: ~ # Placed in secure.yml
 
 mariadb_databases_zh_jurysysteem_staging:
-  - 'zh-jurysysteem-staging'
+  - 'jurysysteem-zh-staging'
 
 mariadb_users_zh_jurysysteem_staging:
   - {
