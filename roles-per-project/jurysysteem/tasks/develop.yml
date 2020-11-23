@@ -15,8 +15,24 @@
 - name: Copy the env file
   command: cp /vagrant/jurysysteem/.env.dist /vagrant/jurysysteem/.env creates=/vagrant/jurysysteem/.env
 
+- name: Check if databases exist and create if necessary
+  mysql_db: name={{ database }} state=present
+  register: create_databases
+  with_items: "{{ mariadb_databases_jurysysteem }}"
+  loop_control:
+    loop_var: database
+  become: yes
+
 - name: Composer install
   command: composer install --no-interaction --prefer-source --no-scripts --working-dir=/vagrant/jurysysteem
+
+- name: Import data files
+  mysql_db: name={{ database }} state=import target=/vagrant/jurysysteem/data/dev_data.sql
+  with_items: "{{ mariadb_databases_jurysysteem }}"
+  loop_control:
+    loop_var: database
+  when: create_databases is changed
+  become: yes
 
 - name: Doctrine migrations
   command: bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration chdir=/vagrant/jurysysteem
