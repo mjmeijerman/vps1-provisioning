@@ -50,7 +50,8 @@
       become: yes
       user:
         name: vagrant
-        group: supervisord
+        groups:
+          - supervisord
         append: yes
 
 - name: Production roles
