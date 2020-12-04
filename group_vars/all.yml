@@ -62,6 +62,8 @@ apt_packages:
   - acl
   - git
   - build-essential
+  - gcc
+  - make
 
 # NGINX
 nginx_www_dir: "/var/www"
