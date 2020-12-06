@@ -58,13 +58,6 @@ mariadb_slow_query_log: "/var/log/mysql/mysql_slow.log"
 bashrc_users:
   - "provision"
 
-apt_packages:
-  - acl
-  - git
-  - build-essential
-  - gcc
-  - make
-
 # NGINX
 nginx_www_dir: "/var/www"
 nginx_dhparam_bits: 256
