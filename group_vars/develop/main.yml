@@ -39,7 +39,7 @@ php7_ini_directives_global:
   allow_url_fopen: 1
   always_populate_raw_post_data: "-1"
   date.timezone: "Europe/Amsterdam"
-  disable_functions: "passthru, popen, curl_multi_exec"
+  disable_functions: "passthru, popen"
   display_errors: "On"
   display_startup_errors: "On"
   mail_sendmail_path: "{{ mailhog_install_dir }}/mhsendmail"

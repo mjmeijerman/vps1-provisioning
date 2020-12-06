@@ -15,6 +15,9 @@
 - name: Copy the env file
   command: cp /vagrant/jurysysteem/.env.dist /vagrant/jurysysteem/.env creates=/vagrant/jurysysteem/.env
 
+- name: Copy the paramerters file
+  command: cp /vagrant/jurysysteem/config/packages/parameters.yaml.dist /vagrant/jurysysteem/config/packages/parameters.yaml creates=/vagrant/jurysysteem/config/parameters.yaml
+
 - name: Check if databases exist and create if necessary
   mysql_db: name={{ database }} state=present
   register: create_databases
