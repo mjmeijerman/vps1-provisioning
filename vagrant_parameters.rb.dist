@@ -18,6 +18,7 @@ $synced_projects = [
     "wieisdebeste",
     "dg-doorstroming",
     "speurtocht",
+    "donargym",
 ]
 
 $synced_folders = {
@@ -25,4 +26,5 @@ $synced_folders = {
     "/vagrant/wieisdebeste" => "/Users/mark/sites/wieisdebeste",
     "/vagrant/dg-doorstroming" => "/Users/mark/sites/dg-doorstroming",
     "/vagrant/speurtocht" => "/Users/mark/sites/speurtocht",
+    "/vagrant/donargym" => "/Users/mark/sites/donargym",
 }

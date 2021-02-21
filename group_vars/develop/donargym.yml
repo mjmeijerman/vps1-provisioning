@@ -1,0 +1,25 @@
+nginx_server_templates_donargym:
+  - name: donargym
+    src: "{{ inventory_dir }}/roles/webserver/templates/http.conf.j2"
+    ssl: off
+    index: index.php
+    web_root: "{{ project_root}}/donargym/public"
+    headers:
+      Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-inline' https://code.jquery.com https://stackpath.bootstrapcdn.com https://cdn.jsdelivr.net  ; style-src 'self' 'unsafe-inline' https://stackpath.bootstrapcdn.com; font-src 'self' data:"
+    domains:
+        - "donargym.loc"
+        - "www.donargym.loc"
+
+donargym_db_user:     'donargym'
+donargym_db_password: 'donargym'
+
+mariadb_databases_donargym:
+  - 'donargym'
+
+mariadb_users_donargym:
+  - {
+    name:     "{{ donargym_db_user }}",
+    password: "{{ donargym_db_password }}",
+    priv:     "donargym.*:ALL",
+    host:     "%"
+  }
