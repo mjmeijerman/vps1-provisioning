@@ -8,6 +8,8 @@ require_relative "vagrant_parameters.rb"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
+    config.vbguest.auto_update = false
+
     config.vm.define "vps1.markmeijerman.loc", primary: true do |vps1|
         vps1.vm.box = "f500/debian-buster64"
         vps1.vm.network :private_network, ip: "192.168.20.104"

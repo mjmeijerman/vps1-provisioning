@@ -1,0 +1,23 @@
+nginx_server_templates_donargym_staging:
+  - name: donargym_staging
+    src: "{{ inventory_dir }}/roles/webserver/templates/https.conf.j2"
+    index: index.php
+    web_root: "{{ project_root}}/staging.donargym.nl/current/public"
+    domains:
+      - "staging.donargym.nl"
+    headers:
+      Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-inline' https://code.jquery.com https://stackpath.bootstrapcdn.com https://cdn.jsdelivr.net  ; style-src 'self' 'unsafe-inline' https://stackpath.bootstrapcdn.com; font-src 'self' data:"
+
+donargym_staging_db_user:     ~ # Placed in secure.yml
+donargym_staging_db_password: ~ # Placed in secure.yml
+
+mariadb_databases_donargym_staging:
+  - 'donargym_staging'
+
+mariadb_users_donargym:
+  - {
+    name:     "{{ donargym_staging_db_user }}",
+    password: "{{ donargym_staging_db_password }}",
+    priv:     "{{ donargym_staging_db_user }}.*:ALL",
+    host:     "%"
+  }
