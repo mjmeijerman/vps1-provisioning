@@ -14,7 +14,7 @@ donargym_staging_db_password: ~ # Placed in secure.yml
 mariadb_databases_donargym_staging:
   - 'donargym_staging'
 
-mariadb_users_donargym:
+mariadb_users_donargym_staging:
   - {
     name:     "{{ donargym_staging_db_user }}",
     password: "{{ donargym_staging_db_password }}",

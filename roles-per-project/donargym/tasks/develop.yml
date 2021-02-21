@@ -20,5 +20,5 @@
 - name: Composer install
   command: composer install --no-interaction --prefer-source --no-scripts --working-dir=/vagrant/donargym
 
-#- name: Doctrine migrations
-#  command: bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration chdir=/vagrant/donargym
+- name: Doctrine migrations
+  command: bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration chdir=/vagrant/donargym
