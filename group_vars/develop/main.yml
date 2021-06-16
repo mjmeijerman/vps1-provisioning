@@ -14,7 +14,7 @@ nginx_http_params:
   sendfile: off # fixes issue to reload javascript files after changes
 nginx_user: vagrant
 nginx_group: vagrant
-nginx_server_templates: "{{ nginx_server_templates_dg_doorstroming + nginx_server_templates_jurymatch + nginx_server_templates_speurtocht + nginx_server_templates_jurysysteem + nginx_server_templates_wie_is_de_beste + nginx_server_templates_donargym }}"
+nginx_server_templates: "{{ nginx_server_templates_dg_doorstroming + nginx_server_templates_jurymatch + nginx_server_templates_speurtocht + nginx_server_templates_jurysysteem + nginx_server_templates_wie_is_de_beste + nginx_server_templates_donargym + nginx_server_templates_voedselbos }}"
 nginx_www_dir: "/var/www"
 nginx_dhparam_bits: 256
 
@@ -88,5 +88,5 @@ mariadb_bind_address:  "127.0.0.1"
 mariadb_root_password: "root"
 mariadb_innodb_buffer_pool_size: 592M
 
-mariadb_databases: "{{ mariadb_databases_jurymatch + mariadb_databases_speurtocht + mariadb_databases_wie_is_de_beste + mariadb_databases_donargym }}"
-mariadb_users: "{{ mariadb_users_jurymatch + mariadb_users_speurtocht + mariadb_users_jurysysteem + mariadb_users_wie_is_de_beste + mariadb_users_donargym }}"
+mariadb_databases: "{{ mariadb_databases_jurymatch + mariadb_databases_speurtocht + mariadb_databases_wie_is_de_beste + mariadb_databases_donargym + mariadb_databases_voedselbos }}"
+mariadb_users: "{{ mariadb_users_jurymatch + mariadb_users_speurtocht + mariadb_users_jurysysteem + mariadb_users_wie_is_de_beste + mariadb_users_donargym + mariadb_users_voedselbos }}"
