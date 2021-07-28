@@ -4,7 +4,7 @@
   become: true
 
   vars:
-    certbot_install_method: 'source'
+    certbot_install_method: 'snap'
     certbot_auto_renew_user: root
 
   pre_tasks:

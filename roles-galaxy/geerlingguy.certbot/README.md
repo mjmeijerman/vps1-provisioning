@@ -1,6 +1,6 @@
 # Ansible Role: Certbot (for Let's Encrypt)
 
-[![Build Status](https://travis-ci.org/geerlingguy/ansible-role-certbot.svg?branch=master)](https://travis-ci.org/geerlingguy/ansible-role-certbot)
+[![CI](https://github.com/geerlingguy/ansible-role-certbot/workflows/CI/badge.svg?event=push)](https://github.com/geerlingguy/ansible-role-certbot/actions?query=workflow%3ACI)
 
 Installs and configures Certbot (for Let's Encrypt).
 
@@ -12,7 +12,9 @@ Generally, installing from source (see section `Source Installation from Git`) l
 
 ## Role Variables
 
-The variable `certbot_install_from_source` controls whether to install Certbot from Git or package management. The latter is the default, so the variable defaults to `no`.
+    certbot_install_method: package
+
+Controls how Certbot is installed. Available options are 'package', 'snap', and 'source'.
 
     certbot_auto_renew: true
     certbot_auto_renew_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
@@ -60,16 +62,23 @@ Services that should be stopped while `certbot` runs it's own standalone server 
 
 These services will only be stopped the first time a new cert is generated.
 
+### Snap Installation
+
+Beginning in December 2020, the Certbot maintainers decided to recommend installing Certbot from Snap rather than maintain scripts like `certbot-auto`.
+
+Setting `certbot_install_method: snap` configures this role to install Certbot via Snap.
+
+This install method is currently experimental and may or may not work across all Linux distributions.
+
 ### Source Installation from Git
 
-You can install Certbot from it's Git source repository if desired. This might be useful in several cases, but especially when older distributions don't have Certbot packages available (e.g. CentOS < 7, Ubuntu < 16.10 and Debian < 8).
+You can install Certbot from it's Git source repository if desired with `certbot_install_method: source`. This might be useful in several cases, but especially when older distributions don't have Certbot packages available (e.g. CentOS < 7, Ubuntu < 16.10 and Debian < 8).
 
-    certbot_install_from_source: false
     certbot_repo: https://github.com/certbot/certbot.git
     certbot_version: master
     certbot_keep_updated: true
 
-Certbot Git repository options. To install from source, set `certbot_install_from_source` to `yes`. This clones the configured `certbot_repo`, respecting the `certbot_version` setting. If `certbot_keep_updated` is set to `yes`, the repository is updated every time this role runs.
+Certbot Git repository options. If installing from source, the configured `certbot_repo` is cloned, respecting the `certbot_version` setting. If `certbot_keep_updated` is set to `yes`, the repository is updated every time this role runs.
 
     certbot_dir: /opt/certbot
 
