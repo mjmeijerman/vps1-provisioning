@@ -16,13 +16,11 @@
 $synced_projects = [
     "jurysysteem",
     "wieisdebeste",
-    "donargym",
     "voedselbos",
 ]
 
 $synced_folders = {
     "/vagrant/jurysysteem" => "/Users/mark/sites/jurysysteem",
     "/vagrant/wieisdebeste" => "/Users/mark/sites/wieisdebeste",
-    "/vagrant/donargym" => "/Users/mark/sites/donargym",
     "/vagrant/voedselbos" => "/Users/mark/sites/voedselbos",
 }
