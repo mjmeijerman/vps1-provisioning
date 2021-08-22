@@ -10,7 +10,7 @@ ssh_provision_user: "provision"
 # NGINX
 nginx_user:         www-data
 nginx_group:        www-data
-server_templates:   "{{ nginx_server_templates_donargym + nginx_server_templates_voedselbos + nginx_server_templates_puzzel }}"
+server_templates:   "{{ nginx_server_templates_donargym + nginx_server_templates_voedselbos }}"
 
 nginx_http_params:
   client_max_body_size: "8M"
