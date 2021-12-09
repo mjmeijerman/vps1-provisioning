@@ -1,14 +1,17 @@
 MariaDB (MySQL) Ansible role for Debian
 =======================================
 
-[![Ansible Galaxy](http://img.shields.io/badge/ansible--galaxy-HanXHX.mysql-blue.svg)](https://galaxy.ansible.com/HanXHX/mysql) [![Build Status](https://travis-ci.org/HanXHX/ansible-mysql.svg?branch=master)](https://travis-ci.org/HanXHX/ansible-mysql)
+[![Ansible Galaxy](http://img.shields.io/badge/ansible--galaxy-HanXHX.mysql-blue.svg)](https://galaxy.ansible.com/HanXHX/mysql) [![Build Status](https://app.travis-ci.com/HanXHX/ansible-mysql.svg?branch=master)](https://app.travis-ci.com/HanXHX/ansible-mysql)
 
 Install and configure MariaDB (Galera Cluster). Manage replication (master/slave). Create users and databases.
 
 | OS              | Origin    | MariaDB versions          |
 | --------------- | --------- | ------------------------- |
 | Debian Buster   | Debian    | 10.3                      |
-| Debian Buster   | Upstream  | 10.3 / 10.4               |
+| Debian Buster   | Upstream  | 10.3 to 10.6              |
+| Debian Bullseye | Debian    | 10.5                      |
+| Debian Bullseye | Upstream  | 10.5 to 10.6              |
+
 
 Notes
 -----
@@ -20,7 +23,8 @@ Notes
 Requirements
 ------------
 
-Ansible 2.8+
+- Ansible >=2.11
+- Collections: community.general / community.mysql / community.crypto / ansible.posix
 
 Role Variables
 --------------
@@ -59,6 +63,10 @@ Check "priv" syntax in [mysql\_user module documentation](http://docs.ansible.co
 
 - `mariadb_version`: depends Debian version
 - `mariadb_repository`: MariaDB upstream APT repository (see: [MariaDB repositories tool](https://downloads.mariadb.org/mariadb/repositories))
+
+### Other
+
+- `mariadb_debug_role`: boolean, set true to disable no_log hidding
 
 Dependencies
 ------------

@@ -32,7 +32,7 @@ php7_fpm_pool_catch_workers_output: yes
 
 # MYSQL
 
-mariadb_version: '10.4'
+mariadb_version: '10.3'
 mariadb_config_template: "{{ inventory_dir }}/roles/webserver/templates/my.cnf.j2"
 mariadb_max_allowed_packet:      "64M"
 mariadb_innodb_buffer_pool_size: 592M
@@ -78,8 +78,8 @@ certbot_create_if_missing: yes
 certbot_admin_email: markmeijerman@gmail.com
 certbot_auto_renew: no  # we use our own task
 
-erlang_series: 22
-rabbitmq_version: "3.8.9"
+erlang_series: 24
+rabbitmq_version: "3.9.11"
 rabbitmq_deb: "rabbitmq-server_{{ rabbitmq_version }}-1_all.deb"
 rabbitmq_deb_url: "https://github.com/rabbitmq/rabbitmq-server/releases/download/v{{ rabbitmq_version }}/{{ rabbitmq_deb }}"
 

@@ -1,5 +1,2 @@
 [production]
 vps1.markmeijerman.nl ansible_ssh_port=22 ansible_ssh_user=provision
-
-[develop]
-vps1.markmeijerman.loc
