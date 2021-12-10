@@ -32,4 +32,4 @@
     permissions: "{{ item.permissions }}"
   with_items: "{{ rabbitmq_management_users }}"
   register: result
-  failed_when: result.failed == true and "Virtual host vhost does not exist" not in result.msg
+  failed_when: result.failed == true and "Virtual host 'vhost' does not exist" not in result.msg

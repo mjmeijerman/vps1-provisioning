@@ -60,7 +60,7 @@ bashrc_users:
 
 # NGINX
 nginx_www_dir: "/var/www"
-nginx_dhparam_bits: 256
+nginx_dhparam_bits: 4096
 nginx_http_headers:
   Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:"
 nginx_http_headers_default:
@@ -73,10 +73,11 @@ nginx_http_headers_default:
 
 # Certbot
 certbot_create_method: webroot
-certbot_create_command: "{{ certbot_script }} certonly --webroot --webroot-path {{ nginx_www_dir }} --noninteractive --agree-tos --email {{ certbot_admin_email }} -d {{ item.item.domains | join(',') }}"
 certbot_create_if_missing: yes
 certbot_admin_email: markmeijerman@gmail.com
 certbot_auto_renew: no  # we use our own task
+certbot_auto_renew_options: "--quiet --no-self-upgrade --renew-hook 'sudo service nginx reload'"
+certbot_create_command: "{{ certbot_script }} certonly --webroot --webroot-path {{ nginx_www_dir }} --noninteractive --agree-tos --email {{ certbot_admin_email }} -d {{ item.item.domains | join(',') }}"
 
 erlang_series: 24
 rabbitmq_version: "3.9.11"

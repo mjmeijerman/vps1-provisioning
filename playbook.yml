@@ -12,7 +12,7 @@
     - f500.nginx
     - f500.locale
     - f500.ufw
-#    - f500.supervisord
+    - f500.supervisord
     - f500.memcached
     - f500.php7
     - f500.php_composer
@@ -27,6 +27,12 @@
       template:
         src: my.cnf.j2
         dest: /etc/mysql/mariadb.conf.d/90-my.cnf
+
+    - name: "copy logrotate configuration"
+      copy:
+        src: "logrotate-nginx"
+        dest: "/etc/logrotate.d/nginx"
+        mode: "0644"
 
 - name: Production roles
   hosts: "production"
