@@ -49,7 +49,7 @@ mariadb_wait_timeout: 600
 mariadb_slow_query_log_enabled: true
 mariadb_long_query_time: 2
 
-mariadb_origin: default
+mariadb_origin: upstream
 mariadb_vendor: mariadb
 
 mariadb_bind_address: "{{ global_db_ip }}"
