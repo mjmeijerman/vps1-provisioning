@@ -4,8 +4,8 @@ Debian
 This role installs these packages:
 
 * curl
-* python-pycurl
-* python-configparser
+* python-pycurl/python3-pycurl
+* python-configparser/python3-configargparse
 
 It adds debian backports repos. 
 
@@ -14,7 +14,7 @@ It also runs apt-get update when it was run, last time, more than `{{ debian_cac
 Requirements
 ------------
 
-Debian Wheezy/Jessie/Stretch.
+Debian Wheezy/Jessie/Stretch/Buster/Bullseye.
 
 Role Variables
 --------------

@@ -17,7 +17,12 @@
   apt_repository: repo='deb-src http://{{ debian_repo_url }}/debian {{ debian_codename }}-backports main' state=present update_cache=yes
 
 - name: install python-configparser
-  apt: pkg={{ python_package}}-configparser state=present
+  apt: pkg=python-configparser state=present
+  when: "python_package == 'python'"
+
+- name: install python3-configparser
+  apt: pkg=python3-configargparse state=present
+  when: "python_package == 'python3'"
 
 - name: write inputrc
   copy: src=inputrc dest=/etc/inputrc owner=root group=root mode=0644
