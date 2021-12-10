@@ -1,5 +1,9 @@
 ---
 
+# DEBIAN
+
+python_package: 'python3'
+
 # PHP
 
 php8_ini_directives_fpm:
