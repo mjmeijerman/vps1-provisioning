@@ -3,8 +3,8 @@
 nginx_server_templates_herstelkamer_staging:
   - name: herstelkamer_staging
     src: "{{ inventory_dir }}/roles/webserver/templates/https.conf.j2"
-    index: app.php
-    web_root: "{{ project_root}}/staging.herstelkamer.nl/current/web"
+    index: index.php
+    web_root: "{{ project_root}}/staging.herstelkamer.nl/current/public"
     headers:
         Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:"
     domains:
