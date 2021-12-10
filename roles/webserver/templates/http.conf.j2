@@ -52,7 +52,7 @@ server {
     }
 
     location ~ \.php$ {
-        fastcgi_pass  unix:/var/run/php/php{{ php7_version }}-fpm.sock;
+        fastcgi_pass  unix:/var/run/php/php{{ php8_version }}-fpm.sock;
         fastcgi_index {{ item.index }};
         include       fastcgi_params;
     }
