@@ -1,0 +1,25 @@
+---
+
+nginx_server_templates_donarteamcup_staging:
+  - name: donarteamcup_staging
+    src: "{{ inventory_dir }}/roles/webserver/templates/https.conf.j2"
+    index: app.php
+    web_root: "{{ project_root}}/staging.donarteamcup.nl/current/web"
+    headers:
+      Content-Security-Policy: "default-src 'self'; script-src code.jquery.com cdn.jsdelivr.net 'self' 'unsafe-inline'; style-src cdn.jsdelivr.net 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:"
+    domains:
+        - "staging.donarteamcup.nl"
+
+donarteamcup_staging_db_user:     ~ # Placed in secure.yml
+donarteamcup_staging_db_password: ~ # Placed in secure.yml
+
+mariadb_databases_donarteamcup_staging:
+  - donarteamcup_staging
+
+mariadb_users_donarteamcup_staging:
+  - {
+    name:     "{{ donarteamcup_staging_db_user }}",
+    password: "{{ donarteamcup_staging_db_password }}",
+    priv:     "donarteamcup_staging.*:ALL",
+    host:     "%"
+  }
