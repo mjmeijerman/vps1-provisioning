@@ -3,8 +3,8 @@
 nginx_server_templates_donarteamcup_staging:
   - name: donarteamcup_staging
     src: "{{ inventory_dir }}/roles/webserver/templates/https.conf.j2"
-    index: app.php
-    web_root: "{{ project_root}}/staging.donarteamcup.nl/current/web"
+    index: index.php
+    web_root: "{{ project_root}}/staging.donarteamcup.nl/current/public"
     headers:
       Content-Security-Policy: "default-src 'self'; script-src code.jquery.com cdn.jsdelivr.net 'self' 'unsafe-inline'; style-src cdn.jsdelivr.net 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:"
     domains:
