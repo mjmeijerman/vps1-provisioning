@@ -1,3 +1,0 @@
-Package: erlang*
-Pin: version {{ erlang_series_deb_version | ternary( (erlang_series_deb_version| string), '1:' + (erlang_series | string) + '*') }}
-Pin-Priority: 1000

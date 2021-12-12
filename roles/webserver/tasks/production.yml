@@ -6,17 +6,6 @@
 - name: Create deploy user
   user: name={{ deploy_user }} groups=www-data shell=/bin/bash state=present password=$6$rounds=100000$Ma2q.iH0Aj6l3SAp$oYVMw4G0AOoCTiLEews.B7DEYAtg39JQg8y2dUx8zVsL22/rVK6KatHvUGrl/PYZUIghg1ic9/TkB7loCTznO1
 
-# Add group to provision user
-- name: Add supervisord group to provision user
-  user: name={{ ssh_provision_user }} groups=supervisord append=yes
-
-# Add group to deploy user
-- name: Add supervisord group to deploy user
-  user: name={{ deploy_user }} groups=supervisord append=yes
-
-- name: Create the supervisor logs folder
-  file: path=/home/logs/supervisor state=directory owner={{ deploy_user }} group={{ deploy_user }} recurse=yes
-
 - name: Add personal authorized key to deploy user
   authorized_key: user={{ deploy_user }} key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
 

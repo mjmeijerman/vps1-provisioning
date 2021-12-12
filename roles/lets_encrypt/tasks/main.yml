@@ -35,7 +35,7 @@
   service:
     name: nginx
     state: stopped
-  when: "webserver_letsencrypt.msg != 'All items completed'"
+  when: "webserver_letsencrypt is defined and webserver_letsencrypt.msg != 'All items completed'"
 
 - name: Create certificates
   shell: "{{ certbot_create_command }}"
@@ -64,7 +64,7 @@
   service:
     name: nginx
     state: started
-  when: "webserver_letsencrypt.msg != 'All items completed'"
+  when: "webserver_letsencrypt is defined and webserver_letsencrypt.msg != 'All items completed'"
 
 - name: add nginx reload renew hook
   template:

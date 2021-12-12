@@ -1,0 +1,25 @@
+---
+
+nginx_server_templates_haagsedonarcup_staging:
+  - name: haagsedonarcup_staging
+    src: "{{ inventory_dir }}/roles/webserver/templates/https.conf.j2"
+    index: index.php
+    web_root: "{{ project_root}}/staging.haagsedonarcup.nl/current/public"
+    headers:
+      Content-Security-Policy: "default-src 'self'; script-src code.jquery.com cdn.jsdelivr.net 'self' 'unsafe-inline'; style-src cdn.jsdelivr.net 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:"
+    domains:
+        - "staging.haagsedonarcup.nl"
+
+haagsedonarcup_staging_db_user:     ~ # Placed in secure.yml
+haagsedonarcup_staging_db_password: ~ # Placed in secure.yml
+
+mariadb_databases_haagsedonarcup_staging:
+  - haagsedonarcup_staging
+
+mariadb_users_haagsedonarcup_staging:
+  - {
+    name:     "{{ haagsedonarcup_staging_db_user }}",
+    password: "{{ haagsedonarcup_staging_db_password }}",
+    priv:     "haagsedonarcup_staging.*:ALL",
+    host:     "%"
+  }
