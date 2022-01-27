@@ -30,7 +30,7 @@ ufw_rules_to_create:
 # PHP
 
 php8_ini_directives_global:
-  disable_functions:      "exec, passthru, system, popen, curl_multi_exec"
+  disable_functions:      "exec, passthru, system, popen"
   allow_url_fopen:        1
   session.save_path:      "/var/lib/php{{ php8_version }}/sessions"
   session.cookie_secure:  1
@@ -63,9 +63,6 @@ php8_fpm_pool_status_path: /status
 php8_fpm_pool_pm_max_children: 128
 php8_fpm_pool_pm_max_requests: 512
 php8_fpm_pool_catch_workers_output: yes
-
-php8_extensions:
-  - memcached
 
 # MYSQL
 mariadb_bind_address:          "127.0.0.1"
