@@ -10,7 +10,15 @@ ssh_provision_user: "provision"
 # NGINX
 nginx_user:         www-data
 nginx_group:        www-data
-server_templates:   "{{ nginx_server_templates_donargym + nginx_server_templates_herstelkamer_staging + nginx_server_templates_herstelkamer + nginx_server_templates_donarteamcup_staging + nginx_server_templates_donarteamcup + nginx_server_templates_haagsedonarcup_staging + nginx_server_templates_haagsedonarcup }}"
+server_templates:   "{{ nginx_server_templates_redirects + nginx_server_templates_donargym + nginx_server_templates_herstelkamer_staging + nginx_server_templates_herstelkamer + nginx_server_templates_donarteamcup_staging + nginx_server_templates_donarteamcup + nginx_server_templates_haagsedonarcup_staging + nginx_server_templates_haagsedonarcup }}"
+
+nginx_server_templates_redirects:
+  - name: "markmeijerman.nl"
+    src: "{{ inventory_dir }}/roles/webserver/templates/redirect.conf.j2"
+    redirect_to: "https://www.linkedin.com/in/mjmeijerman/"
+    domains:
+      - "markmeijerman.nl"
+      - "www.markmeijerman.nl"
 
 nginx_http_params:
   client_max_body_size: "8M"

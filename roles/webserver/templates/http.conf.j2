@@ -8,24 +8,8 @@ server {
     listen      80;
     server_name {{ item.domains | join(' ') }};
 
-    root  {{ item.web_root }};
-    index {{ item.index }};
-
-    access_log {{ item.log_path|default('/var/log/nginx/') }}{{ item.domains | first }}-access.log;
-    error_log  {{ item.log_path|default('/var/log/nginx/') }}{{ item.domains | first }}-error.log;
-
-    {% for key, value in combined_headers.items() if not key == 'Strict-Transport-Security' -%}
-        add_header  {{ key }} "{{ value }}"  always;
-    {% endfor %}
-
     location / {
-        try_files $uri /{{ item.index }}$is_args$args;
-    }
-
-    location ~ \.php$ {
-        fastcgi_pass  unix:/var/run/php/php{{ php8_version }}-fpm.sock;
-        fastcgi_index {{ item.index }};
-        include       fastcgi_params;
+        return 301 https://$host$request_uri;
     }
 
     location /.well-known/acme-challenge {
@@ -33,4 +17,6 @@ server {
         log_not_found off;
         try_files $uri =404;
     }
+
+    access_log off;
 }
