@@ -10,7 +10,7 @@ ssh_provision_user: "provision"
 # NGINX
 nginx_user:         www-data
 nginx_group:        www-data
-server_templates:   "{{ nginx_server_templates_redirects + nginx_server_templates_donargym + nginx_server_templates_donarteamcup }}"
+server_templates: "{{ nginx_server_templates_redirects + nginx_server_templates_donargym + nginx_server_templates_donarteamcup + nginx_server_templates_websites }}"
 
 nginx_server_templates_redirects:
   - name: "markmeijerman.nl"
@@ -76,5 +76,8 @@ php8_fpm_pool_catch_workers_output: yes
 mariadb_bind_address:          "127.0.0.1"
 mariadb_root_password:         ~ # Placed in secure.yml
 
-mariadb_databases: "{{ mariadb_databases_donargym + mariadb_databases_donarteamcup }}"
-mariadb_users: "{{ mariadb_users_donargym + mariadb_users_donarteamcup }}"
+mariadb_databases:
+  - "{{ mariadb_databases_donargym }}"
+  - "{{ mariadb_databases_donarteamcup }}"
+  - "{{ mariadb_databases_websites }}"
+mariadb_users: "{{ mariadb_users_donargym + mariadb_users_donarteamcup + mariadb_users_websites }}"

@@ -1,0 +1,39 @@
+websites_root: /home/websites
+
+nginx_server_templates_websites:
+  - name: bijtjes_markmeijerman
+    label: 'Bloemetjes en bijtjes'
+    domains:
+      - "bijtjes.markmeijerman.nl"
+    src: "{{ inventory_dir }}/roles/webserver/templates/https.conf.j2"
+    index: index.php
+    web_root: "{{ websites_root}}/bijtjes_markmeijerman"
+    headers:
+      Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' about: https://ajax.googleapis.com https://maps.googleapis.com https://ajax.aspnetcdn.com https://*.google-analytics.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://ajax.googleapis.com; img-src 'self' 'unsafe-inline' data: https://csi.gstatic.com https://secure.gravatar.com https://*.google-analytics.com; font-src 'self' data: https://fonts.gstatic.com; frame-ancestors 'none';"
+    db_name: "{{ bijtjes_db_name }}"
+    db_user: "{{ bijtjes_db_user }}"
+    db_password: "{{ bijtjes_db_password }}"
+    url: 'bijtjes.markmeijerman.nl'
+    admin_username: 'mjmeijerman'
+    admin_password: '{{ bijtjes_admin_password }}' # Placed in secure.yml
+    admin_email: 'markmeijerman@hotmail.com'
+
+bijtjes_db_password: ~ # Placed in secure.yml
+bijtjes_db_name: 'bijtjes'
+bijtjes_db_user: 'bijtjes'
+
+mariadb_databases_websites:
+  - "{{ bijtjes_db_name }}"
+
+mariadb_users_websites:
+  - {
+    name:     "{{ bijtjes_db_user }}",
+    password: "{{ bijtjes_db_password }}",
+    priv:     "{{ bijtjes_db_user }}.*:ALL",
+    host:     "localhost"
+  }
+
+## Directories
+web_writable_folders:
+  - "{{ websites_root }}/bijtjes_markmeijerman/wp-content/uploads"
+  - "{{ websites_root }}/bijtjes_markmeijerman/wp-content/wflogs"

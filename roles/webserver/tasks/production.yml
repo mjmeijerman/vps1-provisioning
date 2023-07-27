@@ -18,14 +18,63 @@
 - name: write sudoers for user
   template: src={{ inventory_dir }}/roles/webserver/templates/sudoers.j2 dest=/etc/sudoers.d/{{ deploy_user }} validate='visudo -cf %s'
 
-- name: Add cron job for removing generated files doorstroming project production
-  cron:
-    name: "clean_up_generated_doorstroming_production_excel_files"
-    job: "find /home/deploy/doorstroming.jurysysteem.nl/current/var/uploadedScores/* -mtime +7 -exec rm {} \\;"
-    hour: "23"
+- name: Create 'websites' user
+  user:
+    name: websites
+    groups: www-data
+    shell: /bin/bash
 
-- name: Add cron job for removing generated files doorstroming project test
-  cron:
-    name: "clean_up_generated_doorstroming_test_excel_files"
-    job: "find /home/deploy/doorstroming-test.jurysysteem.nl/current/var/uploadedScores/* -mtime +7 -exec rm {} \\;"
-    hour: "23"
+- name: Create website directories
+  file:
+    path: "/home/websites/{{ item }}"
+    state: directory
+    owner: websites
+    group: websites
+  with_items: "{{ nginx_server_templates_websites | pluck('name') | difference(['defaultssl']) | unique }}"
+
+- name: add composer file for wordpress cli
+  template:
+    src: "{{ inventory_dir }}/roles/webserver/templates/composer.json.j2"
+    dest: "/home/websites/composer.json"
+    owner: websites
+    group: websites
+    mode: 0644
+
+- name: install wordpress cli using composer
+  become: true
+  become_user: 'websites'
+  shell: |
+    composer install --working-dir=/home/websites
+
+- name: Check to see if file exists
+  stat:
+    path: "/home/websites/{{ item.name }}/{{ item.index }}"
+  register: stat_results
+  with_items: "{{ nginx_server_templates_websites }}"
+  ignore_errors: True
+
+# Install new wordpress website using wp-cli for all entries in nginx_server_templates_websites and change permissions for wp-config.php + configure wp-config.php
+- name: Install wordpress website
+  become: true
+  become_user: 'websites'
+  shell: |
+    /home/websites/vendor/bin/wp core download --path=/home/websites/{{ item.item.name }} --locale=nl_NL
+    /home/websites/vendor/bin/wp core config --path=/home/websites/{{ item.item.name }} --dbname={{ item.item.db_name }} --dbuser={{ item.item.db_user }} --dbpass={{ item.item.db_password }} --dbhost=localhost
+    chmod 644 /home/websites/{{ item.item.name }}/wp-config.php
+    /home/websites/vendor/bin/wp core install --path=/home/websites/{{ item.item.name }} --url={{ item.item.url }} --title="{{ item.item.label }}" --admin_name={{ item.item.admin_username }} --admin_password={{ item.item.admin_password }} --admin_email={{ item.item.admin_email }}
+  with_items: "{{ stat_results.results }}"
+  when: item.stat.exists == False
+
+- name: Make sure that all web writable folders exist
+  become: true
+  become_user: 'websites'
+  file: path="{{ item }}" state=directory recurse=yes
+  with_items: "{{ web_writable_folders }}"
+
+- name: Set web_user ACL privileges on directories
+  acl: name={{ item }} entity={{ nginx_user }} etype=user permissions=rwx state=present recursive=yes
+  with_items: "{{ web_writable_folders }}"
+
+- name: Set web_user default ACL privileges on directories
+  acl: name={{ item }} entity={{ nginx_user }} etype=user permissions=rwx default=yes state=present recursive=yes
+  with_items: "{{ web_writable_folders }}"

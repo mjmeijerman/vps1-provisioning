@@ -73,10 +73,10 @@ nginx_http_headers:
 nginx_http_headers_default:
   Content-Security-Policy: "default-src 'self'; form-action 'self'; frame-ancestors 'none'"
   Referrer-Policy: "no-referrer, strict-origin-when-cross-origin"
-  Strict-Transport-Security: max-age=15768000
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   X-Xss-Protection: "1; mode=block"
+  Strict-Transport-Security: "max-age=31536000; includeSubDomains"
 
 # Certbot
 certbot_create_method: webroot

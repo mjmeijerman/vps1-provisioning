@@ -41,5 +41,12 @@ server {
         fastcgi_pass  unix:/var/run/php/php{{ php8_version }}-fpm.sock;
         fastcgi_index {{ item.index|default('app.php') }};
         include       fastcgi_params;
+        fastcgi_param PATH_INFO   $fastcgi_script_name;
+        fastcgi_param SERVER_NAME $host;
+    }
+
+
+    location ~ /\. {
+        deny all;
     }
 }
