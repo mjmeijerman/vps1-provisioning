@@ -44,26 +44,68 @@
   become: true
   become_user: 'websites'
   shell: |
-    composer install --working-dir=/home/websites
+    composer update --working-dir=/home/websites
 
 - name: Check to see if file exists
   stat:
-    path: "/home/websites/{{ item.name }}/{{ item.index }}"
+    path: "/home/websites/{{ item.name }}/wp-config.php"
   register: stat_results
   with_items: "{{ nginx_server_templates_websites }}"
   ignore_errors: True
 
-# Install new wordpress website using wp-cli for all entries in nginx_server_templates_websites and change permissions for wp-config.php + configure wp-config.php
-- name: Install wordpress website
+- name: Remove all files when wp-config file does not exist
+  become: true
+  become_user: 'websites'
+  shell: |
+    rm -rf /home/websites/{{ item.item.name }}/*
+  with_items: "{{ stat_results.results }}"
+  when: item.stat.exists == False
+
+- name: Download wordpress core
   become: true
   become_user: 'websites'
   shell: |
     /home/websites/vendor/bin/wp core download --path=/home/websites/{{ item.item.name }} --locale=nl_NL
+  with_items: "{{ stat_results.results }}"
+  when: item.stat.exists == False
+
+- name: Wordpress configuration
+  become: true
+  become_user: 'websites'
+  shell: |
     /home/websites/vendor/bin/wp core config --path=/home/websites/{{ item.item.name }} --dbname={{ item.item.db_name }} --dbuser={{ item.item.db_user }} --dbpass={{ item.item.db_password }} --dbhost=localhost
+  with_items: "{{ stat_results.results }}"
+  when: item.stat.exists == False
+
+- name: Wordpress configuration file permissions
+  become: true
+  become_user: 'websites'
+  shell: |
     chmod 644 /home/websites/{{ item.item.name }}/wp-config.php
+  with_items: "{{ stat_results.results }}"
+
+- name: Wordpress core installation
+  become: true
+  become_user: 'websites'
+  shell: |
     /home/websites/vendor/bin/wp core install --path=/home/websites/{{ item.item.name }} --url={{ item.item.url }} --title="{{ item.item.label }}" --admin_name={{ item.item.admin_username }} --admin_password={{ item.item.admin_password }} --admin_email={{ item.item.admin_email }}
   with_items: "{{ stat_results.results }}"
   when: item.stat.exists == False
+
+- name: Disable the JSON api
+  command: /home/websites/vendor/bin/wp plugin install disable-json-api --activate chdir=/home/websites/{{ item.item.name }}
+  become_user: 'websites'
+  with_items: "{{ stat_results.results }}"
+
+- name: Disable XML-RPC
+  command: /home/websites/vendor/bin/wp plugin install disable-xml-rpc --activate chdir=/home/websites/{{ item.item.name }}
+  become_user: 'websites'
+  with_items: "{{ stat_results.results }}"
+
+- name: Install WordFence
+  command: /home/websites/vendor/bin/wp plugin install wordfence --activate chdir=/home/websites/{{ item.item.name }}
+  become_user: 'websites'
+  with_items: "{{ stat_results.results }}"
 
 - name: Make sure that all web writable folders exist
   become: true

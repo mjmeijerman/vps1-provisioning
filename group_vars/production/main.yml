@@ -19,6 +19,12 @@ nginx_server_templates_redirects:
     domains:
       - "markmeijerman.nl"
       - "www.markmeijerman.nl"
+  - name: "instachick.nl"
+    src: "{{ inventory_dir }}/roles/webserver/templates/redirect.conf.j2"
+    redirect_to: "https://www.instachicks.nl"
+    domains:
+      - "instachick.nl"
+      - "www.instachick.nl"
 
 nginx_http_params:
   client_max_body_size: "8M"

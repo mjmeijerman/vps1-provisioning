@@ -1,39 +1,70 @@
 websites_root: /home/websites
 
 nginx_server_templates_websites:
-  - name: bijtjes_markmeijerman
-    label: 'Bloemetjes en bijtjes'
+  - name: instachicks
+    label: 'Insta Chicks'
     domains:
-      - "bijtjes.markmeijerman.nl"
-    src: "{{ inventory_dir }}/roles/webserver/templates/https.conf.j2"
+      - "instachicks.nl"
+      - "www.instachicks.nl"
+    src: "{{ inventory_dir }}/roles/webserver/templates/wordpress-https.conf.j2"
     index: index.php
-    web_root: "{{ websites_root}}/bijtjes_markmeijerman"
+    web_root: "{{ websites_root}}/instachicks"
     headers:
       Content-Security-Policy: "frame-src 'self' https://wp-themes.com; default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' 'unsafe-inline' data: https://ts.w.org https://uploads.wikimedia.nl https://s.w.org; font-src 'self'; frame-ancestors 'none';"
-    db_name: "{{ bijtjes_db_name }}"
-    db_user: "{{ bijtjes_db_user }}"
-    db_password: "{{ bijtjes_db_password }}"
-    url: 'bijtjes.markmeijerman.nl'
+    db_name: "{{ instachicks_db_name }}"
+    db_user: "{{ instachicks_db_user }}"
+    db_password: "{{ instachicks_db_password }}"
+    url: 'instachicks.nl'
     admin_username: 'mjmeijerman'
-    admin_password: '{{ bijtjes_admin_password }}' # Placed in secure.yml
+    admin_password: '{{ instachicks_admin_password }}' # Placed in secure.yml
+    admin_email: 'markmeijerman@hotmail.com'
+  - name: knorrespondent
+    label: 'Knorrespondent'
+    domains:
+      - "knorrespondent.nl"
+      - "www.knorrespondent.nl"
+    src: "{{ inventory_dir }}/roles/webserver/templates/wordpress-https.conf.j2"
+    index: index.php
+    web_root: "{{ websites_root}}/knorrespondent"
+    headers:
+      Content-Security-Policy: "frame-src 'self' https://wp-themes.com; default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' 'unsafe-inline' data: https://ts.w.org https://uploads.wikimedia.nl https://s.w.org; font-src 'self'; frame-ancestors 'none';"
+    db_name: "{{ knorrespondent_db_name }}"
+    db_user: "{{ knorrespondent_db_user }}"
+    db_password: "{{ knorrespondent_db_password }}"
+    url: 'knorrespondent.nl'
+    admin_username: 'mjmeijerman'
+    admin_password: '{{ knorrespondent_admin_password }}' # Placed in secure.yml
     admin_email: 'markmeijerman@hotmail.com'
 
-bijtjes_db_password: ~ # Placed in secure.yml
-bijtjes_db_name: 'bijtjes'
-bijtjes_db_user: 'bijtjes'
+instachicks_db_password: ~ # Placed in secure.yml
+instachicks_db_name: 'instachicks'
+instachicks_db_user: 'instachicks'
+
+knorrespondent_db_password: ~ # Placed in secure.yml
+knorrespondent_db_name: 'knorrespondent'
+knorrespondent_db_user: 'knorrespondent'
 
 mariadb_databases_websites:
-  - "{{ bijtjes_db_name }}"
+  - "{{ instachicks_db_name }}"
+  - "{{ knorrespondent_db_name }}"
 
 mariadb_users_websites:
   - {
-    name:     "{{ bijtjes_db_user }}",
-    password: "{{ bijtjes_db_password }}",
-    priv:     "{{ bijtjes_db_user }}.*:ALL",
-    host:     "localhost"
+    name: "{{ instachicks_db_user }}",
+    password: "{{ instachicks_db_password }}",
+    priv: "{{ instachicks_db_user }}.*:ALL",
+    host: "localhost"
+  }
+  - {
+    name: "{{ knorrespondent_db_user }}",
+    password: "{{ knorrespondent_db_password }}",
+    priv: "{{ knorrespondent_db_user }}.*:ALL",
+    host: "localhost"
   }
 
 ## Directories
 web_writable_folders:
-  - "{{ websites_root }}/bijtjes_markmeijerman/wp-content/uploads"
-  - "{{ websites_root }}/bijtjes_markmeijerman/wp-content/wflogs"
+  - "{{ websites_root }}/instachicks/wp-content/uploads"
+  - "{{ websites_root }}/instachicks/wp-content/wflogs"
+  - "{{ websites_root }}/knorrespondent/wp-content/uploads"
+  - "{{ websites_root }}/knorrespondent/wp-content/wflogs"
