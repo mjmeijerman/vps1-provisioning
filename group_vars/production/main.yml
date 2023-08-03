@@ -28,6 +28,7 @@ nginx_server_templates_redirects:
 
 nginx_http_params:
   client_max_body_size: "8M"
+  ssl_protocols: TLSv1.3
 
 # UFW
 ufw_default_policy:
