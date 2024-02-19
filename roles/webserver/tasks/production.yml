@@ -18,7 +18,7 @@
   user: name={{ deploy_user }} groups=www-data shell=/bin/bash state=present password=$6$rounds=100000$Ma2q.iH0Aj6l3SAp$oYVMw4G0AOoCTiLEews.B7DEYAtg39JQg8y2dUx8zVsL22/rVK6KatHvUGrl/PYZUIghg1ic9/TkB7loCTznO1
 
 - name: Add personal authorized key to deploy user
-  authorized_key: user={{ deploy_user }} key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+  authorized_key: user={{ deploy_user }} key="{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
 
 - name: Add deploy user SSH key
   copy: content="{{ deploy_user_private_key }}" dest=/home/{{ deploy_user }}/.ssh/id_rsa owner={{ deploy_user }} group={{ deploy_user }} mode=0600
