@@ -25,6 +25,12 @@ nginx_server_templates_redirects:
     domains:
       - "instachick.nl"
       - "www.instachick.nl"
+  - name: "instachicks.nl"
+    src: "{{ inventory_dir }}/roles/webserver/templates/redirect.conf.j2"
+    redirect_to: "https://www.youtube.com/live/0mu44BseQQo"
+    domains:
+      - "instachicks.nl"
+      - "www.instachicks.nl"
 
 nginx_http_params:
   client_max_body_size: "8M"
