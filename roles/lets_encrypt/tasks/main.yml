@@ -1,80 +1,85 @@
 ---
 
 - name: Check for absent certificates
-  stat:
+  ansible.builtin.stat:
     path: /etc/letsencrypt/live/{{ item.domains | first }}/cert.pem
-  with_items: "{{ server_templates }}"
-  register: webserver_letsencrypt
+  loop: "{{ server_templates }}"
+  register: lets_encrypt_certificates
 
 - name: Write http config for domains without certificate
-  template:
+  ansible.builtin.template:
     src: "{{ inventory_dir }}/roles/webserver/templates/http.conf.j2"
     dest: "/etc/nginx/sites-available/{{ item.item.name }}.conf"
     owner: root
     group: root
-    mode: 0644
-  with_items: "{{ webserver_letsencrypt.results }}"
-  when: "webserver_letsencrypt is defined and not item.stat.exists and (item.item.type is not defined or item.item.type != 'redirect')"
+    mode: "0644"
+  loop: "{{ lets_encrypt_certificates.results }}"
+  when: not item.stat.exists and (item.item.type is not defined or item.item.type != 'redirect')
 
 - name: Activate domains without certificate
-  file:
+  ansible.builtin.file:
     src: "/etc/nginx/sites-available/{{ item.item.name }}.conf"
     dest: "/etc/nginx/sites-enabled/{{ item.item.name }}.conf"
     state: link
-  with_items: "{{ webserver_letsencrypt.results }}"
-  when: "webserver_letsencrypt is defined and not item.stat.exists"
-  register: webserver_http_config_activate
+  loop: "{{ lets_encrypt_certificates.results }}"
+  register: lets_encrypt_http_config_activate
+  when: not item.stat.exists
 
-- name: Reload nginx
-  service:
-    name: nginx
-    state: reloaded
-  when: webserver_http_config_activate is changed
+- name: Reload nginx after enabling a plain-http vhost
+  ansible.builtin.debug:
+    msg: "reload requested"
+  changed_when: lets_encrypt_http_config_activate is changed
+  notify: Reload nginx
 
 - name: Stop nginx
-  service:
+  ansible.builtin.service:
     name: nginx
     state: stopped
-  when: "webserver_letsencrypt is defined and webserver_letsencrypt.msg != 'All items completed'"
+  when: lets_encrypt_certificates.msg != 'All items completed'
 
 - name: Create certificates
-  shell: "{{ certbot_create_command }}"
-  with_items: "{{ webserver_letsencrypt.results }}"
-  when: "webserver_letsencrypt is defined and not item.stat.exists"
+  ansible.builtin.command: "{{ certbot_create_command }}"
+  loop: "{{ lets_encrypt_certificates.results }}"
+  # Certbot writes the certificate only once, so the file appearing is the
+  # change. Without this the task reports changed on every run and the
+  # restarts below fire needlessly.
+  args:
+    creates: "/etc/letsencrypt/live/{{ item.item.domains | first }}/cert.pem"
+  when: not item.stat.exists
 
 - name: Write https configs
-  template:
+  ansible.builtin.template:
     src: "{{ item.src }}"
     dest: "/etc/nginx/sites-available/{{ item.name }}.conf"
     owner: root
     group: root
-    mode: 0644
-  with_items: "{{ server_templates }}"
-  register: webserver_https_config_write
+    mode: "0644"
+  loop: "{{ server_templates }}"
+  register: lets_encrypt_https_config_write
 
 - name: Activate domains
-  file:
+  ansible.builtin.file:
     src: "/etc/nginx/sites-available/{{ item.name }}.conf"
     dest: "/etc/nginx/sites-enabled/{{ item.name }}.conf"
     state: link
-  with_items: "{{ server_templates }}"
-  register: webserver_https_config_activate
+  loop: "{{ server_templates }}"
+  register: lets_encrypt_https_config_activate
 
 - name: Start nginx
-  service:
+  ansible.builtin.service:
     name: nginx
     state: started
-  when: "webserver_letsencrypt is defined and webserver_letsencrypt.msg != 'All items completed'"
+  when: lets_encrypt_certificates.msg != 'All items completed'
 
-- name: add nginx reload renew hook
-  template:
+- name: Add nginx reload renew hook
+  ansible.builtin.template:
     src: "{{ inventory_dir }}/roles/lets_encrypt/templates/01-reload-nginx.j2"
     dest: "/etc/letsencrypt/renewal-hooks/deploy/01-reload-nginx"
     owner: root
     group: root
-    mode: 0744
+    mode: "0744"
 
 - name: Restart nginx
-  service:
+  ansible.builtin.service:
     name: nginx
     state: restarted

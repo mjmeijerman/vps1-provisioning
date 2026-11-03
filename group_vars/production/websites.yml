@@ -8,9 +8,15 @@ nginx_server_templates_websites:
 #      - "www.instachicks.nl"
 #    src: "{{ inventory_dir }}/roles/webserver/templates/wordpress-https.conf.j2"
 #    index: index.php
-#    web_root: "{{ websites_root}}/instachicks"
+#    web_root: "{{ websites_root }}/instachicks"
 #    headers:
-#      Content-Security-Policy: "frame-src 'self' https://wp-themes.com; default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' 'unsafe-inline' data: https://ts.w.org https://uploads.wikimedia.nl https://s.w.org; font-src 'self'; frame-ancestors 'none';"
+# Content-Security-Policy: "frame-src 'self' https://wp-themes.com;
+#   default-src 'self'
+#   script-src 'self' 'unsafe-inline' 'unsafe-eval'
+#   style-src 'self' 'unsafe-inline'
+#   img-src 'self' 'unsafe-inline' data: https://ts.w.org https://uploads.wikimedia.nl https://s.w.org
+#   font-src 'self'
+#   frame-ancestors 'none';"
 #    db_name: "{{ instachicks_db_name }}"
 #    db_user: "{{ instachicks_db_user }}"
 #    db_password: "{{ instachicks_db_password }}"
@@ -25,9 +31,9 @@ nginx_server_templates_websites:
       - "www.knorrespondent.nl"
     src: "{{ inventory_dir }}/roles/webserver/templates/wordpress-https.conf.j2"
     index: index.php
-    web_root: "{{ websites_root}}/knorrespondent"
+    web_root: "{{ websites_root }}/knorrespondent"
     headers:
-      Content-Security-Policy: "frame-src 'self' https://wp-themes.com; default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' 'unsafe-inline' data: https://ts.w.org https://uploads.wikimedia.nl https://s.w.org; font-src 'self'; frame-ancestors 'none';"
+      Content-Security-Policy: "frame-src 'self' https://wp-themes.com; default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' 'unsafe-inline' data: https://ts.w.org https://uploads.wikimedia.nl https://s.w.org; font-src 'self'; frame-ancestors 'none';"  # noqa: yaml[line-length]
     db_name: "{{ knorrespondent_db_name }}"
     db_user: "{{ knorrespondent_db_user }}"
     db_password: "{{ knorrespondent_db_password }}"

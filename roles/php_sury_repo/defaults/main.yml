@@ -1,0 +1,11 @@
+---
+
+php_sury_repo_url: https://packages.sury.org/php/
+php_sury_repo_key_url: https://packages.sury.org/php/apt.gpg
+php_sury_repo_keyring_dir: /usr/share/keyrings
+php_sury_repo_keyring: "{{ php_sury_repo_keyring_dir }}/sury-keyring.gpg"
+
+# Any other file that could hold a competing definition of the same source.
+php_sury_repo_other_files:
+  - /etc/apt/sources.list
+  - /etc/apt/sources.list.d/packages_sury_org_php.list

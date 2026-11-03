@@ -1,0 +1,56 @@
+---
+# Owns the deb.sury.org apt source, so it exists exactly once and always with
+# the key it is signed by.
+#
+# f500.php8 writes the same repository without a signed-by attribute and drops
+# its key in the legacy trusted.gpg.d directory. When the source is already
+# present with signed-by (a manual install, or this role), apt refuses the
+# second definition: "Conflicting values set for option Signed-By". This role
+# runs first and writes the single line that the rest of the playbook expects.
+
+- name: Install the packages the sury repository needs
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - gpg
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Create the keyring directory
+  ansible.builtin.file:
+    path: "{{ php_sury_repo_keyring_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Fetch the deb.sury.org signing key
+  ansible.builtin.get_url:
+    url: "{{ php_sury_repo_key_url }}"
+    dest: "{{ php_sury_repo_keyring }}"
+    mode: "0644"
+
+- name: Point the sury source at the keyring, and write it only there
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/packages_sury_org_php.list
+    mode: "0644"
+    content: |
+      # Managed by Ansible (php_sury_repo). One definition, signed by the key
+      # above; a second line without signed-by is what breaks apt.
+      deb [signed-by={{ php_sury_repo_keyring }}] {{ php_sury_repo_url }} {{ ansible_distribution_release }} main
+  register: php_sury_repo_source
+
+- name: Remove any leftover definition of the same source
+  ansible.builtin.lineinfile:
+    path: "{{ item }}"
+    regexp: '^deb\s.*packages\.sury\.org'
+    state: absent
+  loop: "{{ php_sury_repo_other_files }}"
+  when: item != '/etc/apt/sources.list.d/packages_sury_org_php.list'
+  failed_when: false
+
+- name: Request an apt cache refresh after a source change
+  ansible.builtin.debug:
+    msg: "apt cache refresh requested"
+  changed_when: php_sury_repo_source is changed
+  notify: Refresh the apt cache
