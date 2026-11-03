@@ -1,0 +1,21 @@
+---
+
+# Who may run docker. Membership is root-equivalent; keep the list short.
+install_docker_users:
+  - deploy
+
+# Directories a container writes to. Created with the container's uid so the
+# app can write its SQLite file instead of failing on the first signup.
+install_docker_data_dirs:
+  - path: /var/lib/bakmark-staging
+    owner: "1000"
+    group: "1000"
+    mode: "0700"
+
+# Checkouts that host a compose project. Ownership matters: deploy runs
+# `git reset --hard` in here.
+install_docker_app_dirs:
+  - path: /srv/bakmark
+    owner: deploy
+    repo: git@github.com:mjmeijerman/bakmark.git
+    version: trunk

@@ -1,0 +1,111 @@
+---
+# Docker for the application containers.
+#
+# From Docker's own repository rather than Debian's: the Debian `docker.io`
+# package lags and ships an older compose, and the server needs `docker compose`
+# (v2, a subcommand) because every project here uses it.
+#
+# The containers themselves are not managed by Ansible. What this role owns is
+# the runtime and the one directory a deploy must never be allowed to create:
+# the bind mount that holds real data.
+
+- name: Install the packages apt needs to trust a third-party repository
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Create the Docker keyring directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Add Docker's signing key
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/debian/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: "0644"
+
+- name: Add Docker's repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch={{ ansible_architecture | replace('x86_64', 'amd64') | replace('aarch64', 'arm64') }}
+      signed-by=/etc/apt/keyrings/docker.asc]
+      https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable
+    filename: docker
+    state: present
+    update_cache: true
+
+- name: Install Docker Engine and the compose plugin
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+
+- name: Enable and start Docker
+  ansible.builtin.systemd:
+    name: docker
+    enabled: true
+    state: started
+
+- name: Let the deploy user run Docker
+  ansible.builtin.user:
+    name: "{{ docker_user }}"
+    groups: docker
+    append: true
+  loop: "{{ install_docker_users }}"
+  loop_control:
+    loop_var: docker_user
+
+# ---------------------------------------------------------------------------
+# Bind mounts
+#
+# A container runs as uid 1000 (`node`), so the directory is created with that
+# owner here, at provisioning time. If Docker created it instead it would be
+# root-owned, the app could not write its list, and the first signup would fail
+# with a permission error nobody expects.
+# ---------------------------------------------------------------------------
+- name: Create the directories containers write to
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner | default('1000') }}"
+    group: "{{ item.group | default('1000') }}"
+    mode: "{{ item.mode | default('0700') }}"
+  loop: "{{ install_docker_data_dirs }}"
+
+# ---------------------------------------------------------------------------
+# A compose project checked out on the server
+#
+# The deploy script does `git reset --hard` in this directory, so it is owned by
+# the deploy user and has no business holding anything else.
+# ---------------------------------------------------------------------------
+- name: Create the application directory
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.owner }}"
+    mode: "0755"
+  loop: "{{ install_docker_app_dirs }}"
+
+- name: Check out the application repositories
+  ansible.builtin.git:
+    repo: "{{ item.repo }}"
+    dest: "{{ item.path }}"
+    version: "{{ item.version | default('trunk') }}"
+    # The deploy script owns what is checked out from here on; Ansible only
+    # creates the checkout so the first deploy has somewhere to land.
+    update: false
+  become: true
+  become_user: "{{ item.owner }}"
+  loop: "{{ install_docker_app_dirs }}"
