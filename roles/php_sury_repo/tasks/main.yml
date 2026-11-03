@@ -32,7 +32,7 @@
 
 - name: Point the sury source at the keyring, and write it only there
   ansible.builtin.copy:
-    dest: /etc/apt/sources.list.d/packages_sury_org_php.list
+    dest: "{{ php_sury_repo_source_path }}"
     mode: "0644"
     content: |
       # Managed by Ansible (php_sury_repo). One definition, signed by the key
@@ -46,7 +46,7 @@
     regexp: '^deb\s.*packages\.sury\.org'
     state: absent
   loop: "{{ php_sury_repo_other_files }}"
-  when: item != '/etc/apt/sources.list.d/packages_sury_org_php.list'
+  when: item != php_sury_repo_source_path
   failed_when: false
 
 - name: Request an apt cache refresh after a source change

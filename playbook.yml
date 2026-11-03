@@ -5,6 +5,10 @@
   become: true
 
   roles:
+    # Owns the sury apt source before anything touches the apt cache. Every
+    # role before it that runs `apt update` fails on a box whose sury source
+    # is defined twice, which is exactly what f500.php8 used to leave behind.
+    - php_sury_repo
     - f500.debian
     - install_apt_packages
     - f500.bashrc
@@ -13,7 +17,6 @@
     - f500.locale
     - f500.ufw
     - f500.memcached
-    - php_sury_repo
     - f500.php8
     - f500.php_composer
     - f500.vim
