@@ -11,7 +11,7 @@ php8_ini_directives_fpm:
   post_max_size: "8M"
 
 php8_version: 8.2
-php8_enable_fpm: yes
+php8_enable_fpm: true
 
 php8_versioned_extensions:
   - zip
@@ -25,7 +25,7 @@ php8_versioned_extensions:
   - bcmath
   - memcached
 
-php8_fpm_pool_enabled: yes
+php8_fpm_pool_enabled: true
 php8_fpm_pool_name: www
 php8_fpm_pool_listen: "/run/php/php{{ php8_version }}-fpm.sock"
 php8_fpm_pool_listen_mode: "0660"
@@ -33,7 +33,7 @@ php8_fpm_pool_pm: static
 php8_fpm_pool_status_path: /status
 php8_fpm_pool_pm_max_children: 128
 php8_fpm_pool_pm_max_requests: 512
-php8_fpm_pool_catch_workers_output: yes
+php8_fpm_pool_catch_workers_output: true
 
 # MYSQL
 
@@ -41,7 +41,7 @@ mariadb_mirror_domain: 'mariadb.mirror.wearetriple.com'
 mariadb_repository: 'https://{{ mariadb_mirror_domain }}/repo/11.2.1/debian'
 mariadb_upstream_version: '11.2.1'
 mariadb_config_template: "{{ inventory_dir }}/roles/webserver/templates/my.cnf.j2"
-mariadb_max_allowed_packet:      "64M"
+mariadb_max_allowed_packet: "64M"
 mariadb_innodb_buffer_pool_size: 592M
 mariadb_charset: utf8mb4
 mariadb_collation: utf8mb4_unicode_520_ci
@@ -69,7 +69,7 @@ bashrc_users:
 nginx_www_dir: "/var/www"
 nginx_dhparam_bits: 4096
 nginx_http_headers:
-  Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:"
+  Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:"  # noqa: yaml[line-length]
 nginx_http_headers_default:
   Content-Security-Policy: "default-src 'self'; form-action 'self'; frame-ancestors 'none'"
   Referrer-Policy: "no-referrer, strict-origin-when-cross-origin"
@@ -80,8 +80,11 @@ nginx_http_headers_default:
 
 # Certbot
 certbot_create_method: webroot
-certbot_create_if_missing: yes
+certbot_create_if_missing: true
 certbot_admin_email: markmeijerman@gmail.com
-certbot_auto_renew: no  # we use our own task
+certbot_auto_renew: false  # we use our own task
 certbot_auto_renew_options: "--quiet --no-self-upgrade --renew-hook 'sudo service nginx reload'"
-certbot_create_command: "{{ certbot_script }} certonly --webroot --webroot-path {{ nginx_www_dir }} --noninteractive --agree-tos --email {{ certbot_admin_email }} -d {{ item.item.domains | join(',') }}"
+certbot_create_command: >-
+  {{ certbot_script }} certonly --webroot
+  --webroot-path {{ nginx_www_dir }} --noninteractive --agree-tos
+  --email {{ certbot_admin_email }} -d {{ item.item.domains | join(',') }}

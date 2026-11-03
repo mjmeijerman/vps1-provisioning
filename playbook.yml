@@ -2,7 +2,7 @@
 - name: Provision vps1.markmeijerman.nl
   hosts: all
   remote_user: "{{ ssh_provision_user }}"
-  become: yes
+  become: true
 
   roles:
     - f500.debian
@@ -13,19 +13,25 @@
     - f500.locale
     - f500.ufw
     - f500.memcached
+    - php_sury_repo
     - f500.php8
     - f500.php_composer
     - f500.vim
     - f500.debian
 
   tasks:
-    - name: write custom mariadb conf file
-      template:
+    - name: Write custom mariadb conf file
+      ansible.builtin.template:
         src: my.cnf.j2
         dest: /etc/mysql/mariadb.conf.d/90-my.cnf
+        owner: root
+        group: mysql
+        # The MariaDB config is world-readable on Debian; match that, and say
+        # it out loud so a reprovision cannot silently widen it.
+        mode: "0644"
 
-    - name: "copy logrotate configuration"
-      copy:
+    - name: Copy logrotate configuration
+      ansible.builtin.copy:
         src: "logrotate-nginx"
         dest: "/etc/logrotate.d/nginx"
         mode: "0644"
@@ -33,7 +39,7 @@
 - name: Production roles
   hosts: "production"
   remote_user: "{{ ssh_provision_user }}"
-  become: yes
+  become: true
 
   roles:
     - webserver

@@ -1,6 +1,8 @@
 ---
 
 - name: Install apt packages
-  apt:
+  ansible.builtin.apt:
     name: ['acl', 'git', 'unzip', 'build-essential', 'gcc', 'make', 'gpg-agent']
     state: present
+    update_cache: true
+    cache_valid_time: 3600

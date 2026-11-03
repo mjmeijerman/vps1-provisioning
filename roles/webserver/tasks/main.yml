@@ -1,10 +1,10 @@
 ---
 
 - name: Remove PHP session cleaning cronjob
-  file:
+  ansible.builtin.file:
     path: /etc/cron.d/php
     state: absent
 
 - name: Import production/staging tasks
-  import_tasks: "production.yml"
+  ansible.builtin.import_tasks: production.yml
   when: "'production'"

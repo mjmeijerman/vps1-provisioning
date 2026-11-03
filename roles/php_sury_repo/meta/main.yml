@@ -1,0 +1,12 @@
+---
+galaxy_info:
+  role_name: php_sury_repo
+  author: mjmeijerman
+  description: Owns the deb.sury.org apt source and its signing key
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+dependencies: []

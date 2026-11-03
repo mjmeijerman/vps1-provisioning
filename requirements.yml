@@ -1,0 +1,21 @@
+---
+# Roles. `make update-ansible-roles` installs these into roles-galaxy/.
+roles:
+  - src: f500.debian
+  - src: f500.bashrc
+  - src: f500.locale
+  - src: f500.nginx
+  - src: f500.php8
+  - src: f500.php_composer
+  - src: f500.memcached
+  - src: f500.ufw
+  - src: f500.vim
+  - src: HanXHX.mysql
+  - src: geerlingguy.certbot
+
+# ansible.posix supplies authorized_key and acl; community.mysql is required by
+# HanXHX.mysql. Both used to be assumed present because they were installed
+# globally on the machine that ran the playbook.
+collections:
+  - name: ansible.posix
+  - name: community.mysql
