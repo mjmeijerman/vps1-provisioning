@@ -12,6 +12,47 @@
     state: directory
     mode: "0755"
 
+# Postfix, nginx and friends write to /var/log/mail.log and friends through
+# syslog. Without rsyslog those messages go nowhere: journald only catches what
+# a unit writes to stdout, and a daemon writing to /dev/log is invisible. The
+# symptom is a mail server with no log at all, which is unfixable from outside.
+- name: Install rsyslog
+  ansible.builtin.apt:
+    name: rsyslog
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Enable and start rsyslog
+  ansible.builtin.systemd:
+    name: rsyslog
+    enabled: true
+    state: started
+
+- name: Rotate the syslog files
+  ansible.builtin.copy:
+    dest: /etc/logrotate.d/rsyslog-local
+    mode: "0644"
+    content: |
+      /var/log/mail.log
+      /var/log/mail.err
+      /var/log/mail.warn
+      /var/log/syslog
+      /var/log/auth.log
+      {
+          weekly
+          rotate {{ logging_nginx_rotate_count }}
+          maxage {{ logging_nginx_max_age_days }}
+          missingok
+          notifempty
+          compress
+          delaycompress
+          sharedscripts
+          postrotate
+              [ -f /run/rsyslogd.pid ] && kill -HUP "$(cat /run/rsyslogd.pid)" 2>/dev/null || true
+          endscript
+      }
+
 - name: Cap the systemd journal
   ansible.builtin.copy:
     dest: /etc/systemd/journald.conf.d/00-size.conf
