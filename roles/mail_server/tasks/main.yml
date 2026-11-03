@@ -110,6 +110,16 @@
     mode: "0640"
   notify: Restart opendkim
 
+# smtpd connects to the milter socket as the postfix user. The socket is
+# opendkim:opendkim 0770, so without this membership every message logs
+# "connect to Milter service ... Permission denied" and goes out unsigned.
+- name: Add postfix to the opendkim group
+  ansible.builtin.user:
+    name: postfix
+    groups: opendkim
+    append: true
+  notify: Restart opendkim
+
 - name: Write the OpenDKIM configuration
   ansible.builtin.template:
     src: opendkim.conf.j2

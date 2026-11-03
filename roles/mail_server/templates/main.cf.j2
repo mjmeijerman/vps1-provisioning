@@ -23,8 +23,8 @@ mynetworks = {{ mail_server_networks | join(', ') }}
 mydestination =
 
 # Hand every message to OpenDKIM on the way out.
-smtpd_milters = {{ mail_server_opendkim_socket }}
-non_smtpd_milters = {{ mail_server_opendkim_socket }}
+smtpd_milters = {{ mail_server_milter }}
+non_smtpd_milters = {{ mail_server_milter }}
 milter_default_action = accept
 milter_protocol = 6
 

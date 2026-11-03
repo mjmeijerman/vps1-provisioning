@@ -16,7 +16,21 @@ mail_server_dkim_bits: 2048
 mail_server_dmarc_report: hello@bakmark.nl
 
 mail_server_opendkim_key_dir: /etc/opendkim/keys/{{ mail_server_dkim_domain }}
-mail_server_opendkim_socket: local:/run/opendkim/opendkim.sock
+
+# A unix socket is invisible inside Postfix's chroot, and cleanup/smtp are
+# chrooted by default: the milter looked present on the host and missing from
+# inside the jail, so every message went out unsigned. A loopback TCP listener
+# has no such problem, and Postfix documents it for exactly this case.
+mail_server_milter_host: 127.0.0.1
+mail_server_milter_port: 8891
+# The two programs spell the same socket differently, and neither accepts the
+# other's form:
+#   OpenDKIM  inet:PORT@HOST   — libmilter's own syntax; `inet:HOST:PORT`
+#                                fails with a bare smfi_opensocket() error
+#   Postfix   inet:HOST:PORT   — `inet:PORT@HOST` dies with
+#                                "garbage after numerical service"
+mail_server_milter_listen: inet:{{ mail_server_milter_port }}@{{ mail_server_milter_host }}
+mail_server_milter: inet:{{ mail_server_milter_host }}:{{ mail_server_milter_port }}
 
 # Only these may relay: this machine, and the docker bridge the containers sit
 # on. 172.16/12 rather than one address, because the bridge changes when Docker

@@ -11,7 +11,7 @@ LogWhy                 Yes
 UserID                 opendkim:opendkim
 UMask                  007
 
-Socket                 {{ mail_server_opendkim_socket }}
+Socket                 {{ mail_server_milter_listen }}
 PidFile                /run/opendkim/opendkim.pid
 
 # The tables that say which domain signs with which key.
