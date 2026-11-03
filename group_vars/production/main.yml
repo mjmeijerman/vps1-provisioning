@@ -19,6 +19,14 @@ nginx_server_templates_redirects:
     domains:
       - "markmeijerman.nl"
       - "www.markmeijerman.nl"
+  # Same destination as .nl; both TLDs are delegated to the same nameservers
+  # and already resolve to this host.
+  - name: "markmeijerman.eu"
+    src: "{{ inventory_dir }}/roles/webserver/templates/redirect.conf.j2"
+    redirect_to: "https://www.linkedin.com/in/mjmeijerman/"
+    domains:
+      - "markmeijerman.eu"
+      - "www.markmeijerman.eu"
   - name: "instachick.nl"
     src: "{{ inventory_dir }}/roles/webserver/templates/redirect.conf.j2"
     redirect_to: "https://www.instachicks.nl"
