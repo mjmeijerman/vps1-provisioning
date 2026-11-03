@@ -98,3 +98,34 @@ cold IP, which is the worst case D6 describes.
 Send to a mail-tester.com address and require **≥9/10**, then send to a real
 Gmail and Outlook address and check the folder. Both, every time the MTA config
 changes.
+
+## Logs
+
+Everything is bounded. That is the whole point: the box had 5 GB of `/var/log`
+on a 59 GB disk before any container existed.
+
+| What | Where | Kept |
+|---|---|---|
+| systemd journal | `journalctl` | 500 MB / 7 days |
+| nginx | `/var/log/nginx/*.log` | 14 rotations, compressed, 30 days |
+| containers | `docker compose logs` | 10 MB x 3 per container (`daemon.json`) |
+| failed logins | `/var/log/btmp` | 4 monthly rotations |
+| daily summary | `/var/log/logwatch/yesterday.html` | 14 days |
+
+### Knowing something broke
+
+`/etc/cron.hourly/health-check` writes only when something is wrong:
+
+- disk above 85%
+- any of nginx, mariadb, docker, postfix, opendkim not running
+
+It mails `logging_alert_email`. Silence means healthy, so an empty inbox is the
+good outcome, not a sign the check stopped running. Verify with:
+
+    sudo run-parts --test /etc/cron.hourly   # is it registered
+    sudo /etc/cron.hourly/health-check       # prints only on a problem
+
+Application errors are in the container's own log, which is also what
+`deploy.sh` prints when a rollout fails its health check:
+
+    docker compose -f /srv/bakmark-production/docker-compose.yml logs --tail 100 bakmark

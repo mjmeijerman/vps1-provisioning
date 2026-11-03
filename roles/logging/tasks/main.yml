@@ -1,0 +1,139 @@
+---
+# Logging: keep what you need to debug a breakage, and cap everything.
+#
+# The box had 5 GB of /var/log on a 59 GB disk before any container existed:
+# 4.1 GB of journald with no size limit, 683 MB of nginx logs rotated weekly at
+# best, and a 207 MB btmp. None of it was bounded, which is the classic way a
+# small VPS dies three months later for no visible reason.
+
+- name: Create the journald drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/journald.conf.d
+    state: directory
+    mode: "0755"
+
+- name: Cap the systemd journal
+  ansible.builtin.copy:
+    dest: /etc/systemd/journald.conf.d/00-size.conf
+    mode: "0644"
+    content: |
+      # Managed by Ansible (vps1-provisioning, role logging).
+      #
+      # A journal with no cap grows until the disk is full. These are the
+      # defaults a Debian box should have had.
+      [Journal]
+      Storage=persistent
+      SystemMaxUse={{ logging_journal_max_use }}
+      SystemMaxFileSize={{ logging_journal_max_file }}
+      # Keep a week: long enough to explain "it broke on Tuesday", short enough
+      # to stay inside the cap on a busy week.
+      MaxRetentionSec={{ logging_journal_retention }}
+      # Boot messages are already on each boot's own line.
+      ForwardToSyslog=no
+  notify: Restart journald
+
+# nginx logs per vhost, one file per site per stream. Monthly rotation with a
+# hard count: a busy week cannot fill the disk before rotation runs.
+- name: Rotate nginx logs
+  ansible.builtin.copy:
+    dest: /etc/logrotate.d/nginx
+    mode: "0644"
+    content: |
+      /var/log/nginx/*.log {
+          daily
+          rotate {{ logging_nginx_rotate_count }}
+          maxage {{ logging_nginx_max_age_days }}
+          size {{ logging_nginx_rotate_size }}
+          missingok
+          notifempty
+          compress
+          delaycompress
+          sharedscripts
+          postrotate
+              [ -f /run/nginx.pid ] && kill -USR1 "$(cat /run/nginx.pid)"
+          endscript
+      }
+
+# Auth failures only: a 207 MB btmp is failed-login records nobody reads. This
+# is the one file where the interesting events are worth keeping, at a size
+# that cannot run away.
+- name: Cap the failed-login records
+  ansible.builtin.copy:
+    dest: /etc/logrotate.d/btmp
+    mode: "0644"
+    content: |
+      /var/log/btmp {
+          monthly
+          rotate {{ logging_btmp_rotate_count }}
+          maxage {{ logging_btmp_max_age_days }}
+          missingok
+          notifempty
+          compress
+          delaycompress
+          create 0600 root utmp
+      }
+
+# A log nobody reads is a disk leak. This keeps a week of everything that
+# matters, in one place, without a logging stack to run.
+- name: Install logwatch
+  ansible.builtin.apt:
+    name: logwatch
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Write a daily summary to a file cron can act on
+  ansible.builtin.copy:
+    dest: /etc/cron.daily/logwatch-summary
+    mode: "0755"
+    content: |
+      #!/bin/sh
+      # One readable summary a day, so "is anything broken" is a file to open
+      # rather than a grep to remember.
+      set -eu
+      logwatch --detail {{ logging_logwatch_detail }} \
+        --range yesterday \
+        --service All \
+        --output file \
+        --filename /var/log/logwatch/yesterday.html \
+        --format html >/dev/null
+      find /var/log/logwatch -name 'yesterday.html' -mtime +{{ logging_logwatch_keep_days }} -delete 2>/dev/null || true
+
+- name: Create the logwatch output directory
+  ansible.builtin.file:
+    path: /var/log/logwatch
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+# The one thing that actually tells you something broke: a disk that is filling,
+# and services that are down. Cheap, and it runs before the box is unusable.
+- name: Write a health check cron job
+  ansible.builtin.copy:
+    dest: /etc/cron.hourly/health-check
+    mode: "0755"
+    content: |
+      #!/bin/sh
+      # Writes only when something is wrong, so an empty inbox means healthy.
+      set -eu
+      ALERT_TO="{{ logging_alert_email }}"
+      problems=""
+
+      used="$(df --output=pcent / | tail -1 | tr -dc '0-9')"
+      [ "$used" -ge {{ logging_disk_warn_percent }} ] && \
+        problems="$problems\ndisk / at ${used}%"
+
+      for unit in {{ logging_critical_services | join(' ') }}; do
+        systemctl is-active --quiet "$unit" || problems="$problems\n$unit is not running"
+      done
+
+      [ -z "$problems" ] && exit 0
+
+      {
+        echo "Subject: [$(hostname)] problem"
+        echo ""
+        printf '%b\n' "$problems"
+        echo ""
+        echo "Disk:"; df -h /
+      } | sendmail "$ALERT_TO"

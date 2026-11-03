@@ -1,0 +1,31 @@
+---
+
+# 500 MB of journal on a 59 GB disk: enough to explain a bad night, small
+# enough to never be the reason the disk fills.
+logging_journal_max_use: 500M
+logging_journal_max_file: 50M
+logging_journal_retention: 1week
+
+logging_nginx_rotate_count: 14
+logging_nginx_max_age_days: 30
+# Rotate early when a busy week would otherwise wait for the daily run.
+logging_nginx_rotate_size: 50M
+
+logging_btmp_rotate_count: 4
+logging_btmp_max_age_days: 120
+
+logging_logwatch_detail: Med
+logging_logwatch_keep_days: 14
+
+# Writes only when something is wrong, so silence means healthy.
+# Addressed to a real mailbox: mail to root@ on this box is never read, and the
+# point of the alert is to reach a person.
+logging_alert_email: hello@bakmark.nl
+logging_disk_warn_percent: 85
+
+logging_critical_services:
+  - nginx
+  - mariadb
+  - docker
+  - postfix
+  - opendkim
