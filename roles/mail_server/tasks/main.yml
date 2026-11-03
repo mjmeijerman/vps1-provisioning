@@ -195,13 +195,22 @@
     port: 25
     timeout: 30
 
+# Read ONE line, not 64 bytes. `head -c 64` blocks until 64 bytes arrive, and
+# the banner is about 25, so the playbook hangs instead of failing. The timeout
+# covers the other direction: a server that accepts the connection and says
+# nothing would hold this open just as long.
 - name: Read the SMTP banner
   ansible.builtin.shell:
-    cmd: "exec 3<>/dev/tcp/127.0.0.1/25; head -c 64 <&3"
+    cmd: |
+      set -o pipefail
+      exec 3<>/dev/tcp/{{ mail_server_banner_host }}/25
+      timeout 5 head -1 <&3
     executable: /bin/bash
   register: mail_server_banner
   changed_when: false
   failed_when: "'220' not in mail_server_banner.stdout"
+  # A timeout is slow, not a reason to retry.
+  timeout: 20
 
 - name: Refuse to report success without a working SMTP service
   ansible.builtin.assert:
