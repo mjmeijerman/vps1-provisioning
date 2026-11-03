@@ -6,8 +6,8 @@
 # (v2, a subcommand) because every project here uses it.
 #
 # The containers themselves are not managed by Ansible. What this role owns is
-# the runtime and the one directory a deploy must never be allowed to create:
-# the bind mount that holds real data.
+# the runtime and the things a deploy must never be allowed to create: the bind
+# mounts that hold real data, and the checkouts a deploy resets.
 
 - name: Install the packages apt needs to trust a third-party repository
   ansible.builtin.apt:
@@ -51,13 +51,31 @@
       - docker-compose-plugin
     state: present
 
+# ---------------------------------------------------------------------------
+# Host limits, before the daemon starts.
+#
+# The box has 2 GB and MariaDB plus several PHP pools already on it. Unbounded
+# json-file logs are the classic way a small VPS fills its disk, and each
+# container restart appends to the same file.
+# ---------------------------------------------------------------------------
+- name: Configure the Docker daemon
+  ansible.builtin.template:
+    src: daemon.json.j2
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart docker
+
 - name: Enable and start Docker
   ansible.builtin.systemd:
     name: docker
     enabled: true
     state: started
+  # Apply the daemon config before the first container exists.
+  notify: Restart docker
 
-- name: Let the deploy user run Docker
+- name: Let the listed users run Docker
   ansible.builtin.user:
     name: "{{ docker_user }}"
     groups: docker
@@ -67,45 +85,106 @@
     loop_var: docker_user
 
 # ---------------------------------------------------------------------------
-# Bind mounts
+# Swap
 #
-# A container runs as uid 1000 (`node`), so the directory is created with that
-# owner here, at provisioning time. If Docker created it instead it would be
+# 2 GB with a database is tight, and an OOM kill takes down MariaDB rather than
+# the container that caused it.
+# ---------------------------------------------------------------------------
+- name: Check for a swap file
+  ansible.builtin.stat:
+    path: /swapfile
+  register: install_docker_swapfile
+
+- name: Create the swap file
+  ansible.builtin.command:
+    cmd: fallocate -l {{ install_docker_swap_size_mb }}M /swapfile
+    creates: /swapfile
+  when: not install_docker_swapfile.stat.exists
+
+- name: Set swap file permissions
+  ansible.builtin.file:
+    path: /swapfile
+    owner: root
+    group: root
+    mode: "0600"
+  when: not install_docker_swapfile.stat.exists
+
+# Only format a file that is not already swap: mkswap on a live swap file
+# destroys the data in it.
+- name: Read the swap file's current signature
+  ansible.builtin.command:
+    cmd: blkid -o value -s TYPE /swapfile
+  register: install_docker_swapblkid
+  changed_when: false
+  failed_when: false
+  when: install_docker_swapfile.stat.exists
+
+- name: Format the swap file
+  ansible.builtin.command:
+    cmd: mkswap /swapfile
+  # The guard is the signature check above: this only runs when the file exists
+  # and is not already swap, so a change here is always a real change.
+  when:
+    - install_docker_swapfile.stat.exists
+    - install_docker_swapblkid.stdout != "swap"
+  changed_when: true
+
+- name: Enable the swap file now
+  ansible.builtin.command:
+    cmd: swapon /swapfile
+  register: install_docker_swapon
+  changed_when: install_docker_swapon.rc == 0
+  failed_when:
+    - install_docker_swapon.rc != 0
+    - "'already' not in install_docker_swapon.stderr"
+
+- name: Keep the swap file across reboots
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    line: /swapfile none swap sw 0 0
+    state: present
+
+# ---------------------------------------------------------------------------
+# One checkout and one data directory per application environment.
+#
+# A container runs as uid 1000, so the data directory is created with that owner
+# here, at provisioning time. If Docker created it instead it would be
 # root-owned, the app could not write its list, and the first signup would fail
 # with a permission error nobody expects.
 # ---------------------------------------------------------------------------
-- name: Create the directories containers write to
+- name: Create a data directory per project
   ansible.builtin.file:
-    path: "{{ item.path }}"
+    path: "{{ item.data_dir }}"
     state: directory
-    owner: "{{ item.owner | default('1000') }}"
-    group: "{{ item.group | default('1000') }}"
-    mode: "{{ item.mode | default('0700') }}"
-  loop: "{{ install_docker_data_dirs }}"
+    owner: "{{ install_docker_data_owner }}"
+    group: "{{ install_docker_data_owner }}"
+    mode: "{{ install_docker_data_mode }}"
+  loop: "{{ install_docker_projects }}"
+  loop_control:
+    label: "{{ item.name }}"
 
-# ---------------------------------------------------------------------------
-# A compose project checked out on the server
-#
-# The deploy script does `git reset --hard` in this directory, so it is owned by
-# the deploy user and has no business holding anything else.
-# ---------------------------------------------------------------------------
-- name: Create the application directory
+- name: Create an application directory per project
   ansible.builtin.file:
     path: "{{ item.path }}"
     state: directory
-    owner: "{{ item.owner }}"
-    group: "{{ item.owner }}"
+    owner: "{{ install_docker_users | first }}"
+    group: "{{ install_docker_users | first }}"
     mode: "0755"
-  loop: "{{ install_docker_app_dirs }}"
+  loop: "{{ install_docker_projects }}"
+  loop_control:
+    label: "{{ item.name }}"
 
 - name: Check out the application repositories
   ansible.builtin.git:
     repo: "{{ item.repo }}"
     dest: "{{ item.path }}"
-    version: "{{ item.version | default('trunk') }}"
-    # The deploy script owns what is checked out from here on; Ansible only
-    # creates the checkout so the first deploy has somewhere to land.
+    version: "{{ item.version }}"
+    # The deploy script owns what is checked out from here on. Ansible only
+    # creates the checkout so the first deploy has somewhere to land; running
+    # `update: true` here would fight the deploy for the same state.
     update: false
   become: true
-  become_user: "{{ item.owner }}"
-  loop: "{{ install_docker_app_dirs }}"
+  become_user: "{{ install_docker_users | first }}"
+  loop: "{{ install_docker_projects }}"
+  loop_control:
+    label: "{{ item.name }}"

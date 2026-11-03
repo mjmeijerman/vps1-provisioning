@@ -4,18 +4,45 @@
 install_docker_users:
   - deploy
 
-# Directories a container writes to. Created with the container's uid so the
-# app can write its SQLite file instead of failing on the first signup.
-install_docker_data_dirs:
-  - path: /var/lib/bakmark-staging
-    owner: "1000"
-    group: "1000"
-    mode: "0700"
-
-# Checkouts that host a compose project. Ownership matters: deploy runs
-# `git reset --hard` in here.
-install_docker_app_dirs:
-  - path: /srv/bakmark
-    owner: deploy
+# ---------------------------------------------------------------------------
+# Compose projects
+#
+# One entry per application environment that runs on this box. Staging AND
+# production share the machine, so each needs its own port, its own data
+# directory and its own compose project name: two `docker compose up` calls in
+# one directory would otherwise replace each other's containers.
+# ---------------------------------------------------------------------------
+install_docker_projects:
+  - name: bakmark-production
+    path: /srv/bakmark-production
     repo: git@github.com:mjmeijerman/bakmark.git
     version: trunk
+    repo_url: https://github.com/mjmeijerman/bakmark
+    data_dir: /var/lib/bakmark
+    port: 8085
+    site_url: https://bakmark.nl
+
+  - name: bakmark-staging
+    path: /srv/bakmark-staging
+    repo: git@github.com:mjmeijerman/bakmark.git
+    version: trunk
+    repo_url: https://github.com/mjmeijerman/bakmark
+    data_dir: /var/lib/bakmark-staging
+    port: 8090
+    site_url: https://staging.bakmark.nl
+
+# Owner of a container's data directory. The image runs as `node`, uid 1000;
+# created here because Docker would make it root-owned.
+install_docker_data_owner: "1000"
+install_docker_data_mode: "0700"
+
+# ---------------------------------------------------------------------------
+# Host limits
+#
+# The box has 2 GB with MariaDB and several PHP pools already on it. Unbounded
+# container logs are the classic way a small VPS fills its disk, and a swap
+# file is cheaper than an OOM kill.
+# ---------------------------------------------------------------------------
+install_docker_log_max_size: "10m"
+install_docker_log_max_file: "3"
+install_docker_swap_size_mb: 2048

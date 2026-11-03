@@ -5,8 +5,24 @@ websites_root: /home/websites
 # allowedDomains), so the Host header has to be the real one, which is why the
 # proxy passes $host rather than a rewritten name.
 bakmark_staging_port: 8090
+bakmark_production_port: 8085
 
 nginx_server_templates_proxies:
+  - name: bakmark
+    domains:
+      - "bakmark.nl"
+      - "www.bakmark.nl"
+    src: "{{ inventory_dir }}/roles/webserver/templates/proxy-https.conf.j2"
+    proxy_pass: "127.0.0.1:{{ bakmark_production_port }}"
+    headers:
+      Content-Security-Policy: >-
+        default-src 'self'; script-src 'self' 'unsafe-inline';
+        style-src 'self' 'unsafe-inline'; img-src 'self' data:;
+        font-src 'self'; frame-ancestors 'none'; base-uri 'self'
+      X-Content-Type-Options: nosniff
+      Referrer-Policy: no-referrer
+      X-Frame-Options: DENY
+
   - name: bakmark-staging
     domains:
       - "staging.bakmark.nl"
