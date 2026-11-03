@@ -21,7 +21,9 @@ lint:
 .PHONY: update-ansible-roles
 update-ansible-roles:
 	ansible-galaxy install -r requirements.yml -f
-	ansible-galaxy collection install -r requirements.yml
+	# Collections go to the user's home: the system path belongs to the distro
+	# package and cannot be written without root.
+	ansible-galaxy collection install -r requirements.yml -p ~/.ansible/collections
 
 ## help:		Print this message
 .PHONY: help
