@@ -49,3 +49,10 @@ mail_server_message_size_limit: 10240000
 # Where the role checks that smtpd answers. Loopback, because the check runs on
 # the host that runs Postfix.
 mail_server_banner_host: 127.0.0.1
+
+# TrustedHosts entries beyond the host itself. The docker bridge, because a
+# container's mail arrives from there: without it OpenDKIM logs
+# "not internal", treats the message as external, and never signs it.
+mail_server_trusted_networks:
+  - 172.16.0.0/12
+  - 10.0.0.0/8

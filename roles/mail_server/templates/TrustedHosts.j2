@@ -1,5 +1,12 @@
+# Hosts whose mail OpenDKIM treats as internal: it signs it and skips
+# verification. A container's packets arrive from the docker bridge, not from
+# loopback, so without that network every message is "not internal" and goes
+# out unsigned.
 127.0.0.1
 ::1
 localhost
 {{ mail_server_hostname }}
 {{ mail_server_dkim_domain }}
+{% for network in mail_server_trusted_networks %}
+{{ network }}
+{% endfor %}
