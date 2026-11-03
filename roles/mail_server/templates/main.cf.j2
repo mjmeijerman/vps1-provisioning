@@ -28,6 +28,15 @@ non_smtpd_milters = {{ mail_server_opendkim_socket }}
 milter_default_action = accept
 milter_protocol = 6
 
+# Postfix 3 refuses to start without at least one working relay restriction.
+# reject_unauth_destination is the one that keeps this from being an open relay:
+# it accepts mail for our own domains and refuses to forward anything else.
+smtpd_relay_restrictions = permit_mynetworks, reject_unauth_destination
+smtpd_recipient_restrictions = permit_mynetworks, reject_unauth_destination, reject_non_fqdn_recipient, reject_unknown_recipient_domain
+
+# No NIS on this box; without this smtpd logs a warning on every start.
+smtpd_sasl_auth_enable = no
+
 smtpd_banner = $myhostname ESMTP
 biff = no
 append_dot_mydomain = no

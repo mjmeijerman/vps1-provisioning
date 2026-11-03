@@ -160,14 +160,49 @@
   changed_when: false
   failed_when: mail_server_master_check.rc != 0
 
-- name: Enable and start Postfix and OpenDKIM
+# postfix.service on Debian is a stub: ExecStart=/bin/true, Type=oneshot, and it
+# reports "active (exited)" whether or not a mail system runs. The real unit is
+# postfix@-.service. Starting the stub alone leaves an empty port that accepts
+# connections and never answers, which is what took three deploys to notice.
+- name: Enable and start OpenDKIM
   ansible.builtin.systemd:
-    name: "{{ item }}"
+    name: opendkim
     enabled: true
     state: started
-  loop:
-    - opendkim
-    - postfix
+
+- name: Enable and start the Postfix instance
+  ansible.builtin.systemd:
+    name: "postfix@-"
+    enabled: true
+    state: restarted
+
+# The only check that proves the mail system works: a banner on port 25. A
+# "started" unit, an open socket and a listening port all looked healthy while
+# nothing was there to answer.
+- name: Wait for the SMTP banner
+  ansible.builtin.wait_for:
+    host: "{{ mail_server_banner_host }}"
+    port: 25
+    timeout: 30
+
+- name: Read the SMTP banner
+  ansible.builtin.shell:
+    cmd: "exec 3<>/dev/tcp/127.0.0.1/25; head -c 64 <&3"
+    executable: /bin/bash
+  register: mail_server_banner
+  changed_when: false
+  failed_when: "'220' not in mail_server_banner.stdout"
+
+- name: Refuse to report success without a working SMTP service
+  ansible.builtin.assert:
+    that:
+      - "'220' in mail_server_banner.stdout"
+    fail_msg: >-
+      Postfix is running but smtpd did not answer. Check
+      `journalctl -u postfix@-` for a fatal line: a malformed mynetworks entry
+      and missing smtpd_relay_restrictions both stop smtpd from starting while
+      the service still reports active.
+    quiet: true
 
 # Postfix must not be an open relay, and it must accept mail from the app.
 # Checked here rather than assumed: a misconfigured mynetworks is how a VPS
