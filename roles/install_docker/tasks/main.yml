@@ -84,6 +84,25 @@
   loop_control:
     loop_var: docker_user
 
+- name: Read the docker group members
+  ansible.builtin.getent:
+    database: group
+    key: docker
+  register: install_docker_group
+
+- name: Fail when a listed user did not land in the docker group
+  ansible.builtin.assert:
+    that:
+      - docker_user in install_docker_group.ansible_facts.getent_group['docker'][2].split(',')
+    fail_msg: >-
+      {{ docker_user }} is not in the docker group, so a deploy cannot reach the
+      daemon. Check that the docker-ce package installed the group and that the
+      user task ran before this point.
+    quiet: true
+  loop: "{{ install_docker_users }}"
+  loop_control:
+    loop_var: docker_user
+
 # ---------------------------------------------------------------------------
 # Swap
 #
@@ -153,12 +172,16 @@
 # root-owned, the app could not write its list, and the first signup would fail
 # with a permission error nobody expects.
 # ---------------------------------------------------------------------------
+# The owner is a number, not a name: the image's uid 1000 has no user on the
+# host, and a name that does not resolve leaves the directory with whatever
+# owner it already had, which is how both data directories ended up owned by
+# the provisioning user and unwritable by the container.
 - name: Create a data directory per project
   ansible.builtin.file:
     path: "{{ item.data_dir }}"
     state: directory
-    owner: "{{ install_docker_data_owner }}"
-    group: "{{ install_docker_data_owner }}"
+    owner: "{{ install_docker_data_owner | int }}"
+    group: "{{ install_docker_data_owner | int }}"
     mode: "{{ install_docker_data_mode }}"
   loop: "{{ install_docker_projects }}"
   loop_control:
