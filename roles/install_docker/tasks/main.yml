@@ -107,36 +107,37 @@
     owner: root
     group: root
     mode: "0600"
-  when: not install_docker_swapfile.stat.exists
 
-# Only format a file that is not already swap: mkswap on a live swap file
-# destroys the data in it.
+# The file exists by now, whether this run created it or an earlier one did.
+# Checking the signature is what makes both cases safe: mkswap on a live swap
+# file destroys whatever is in it.
 - name: Read the swap file's current signature
   ansible.builtin.command:
-    cmd: blkid -o value -s TYPE /swapfile
+    cmd: /sbin/blkid -o value -s TYPE /swapfile
   register: install_docker_swapblkid
   changed_when: false
   failed_when: false
-  when: install_docker_swapfile.stat.exists
+
+# /sbin is not on the PATH of a sudo shell here, so these are called by path.
+- name: Read the active swap devices
+  ansible.builtin.command:
+    cmd: /sbin/swapon --show=NAME --noheadings
+  register: install_docker_swapactive
+  changed_when: false
 
 - name: Format the swap file
   ansible.builtin.command:
-    cmd: mkswap /swapfile
-  # The guard is the signature check above: this only runs when the file exists
-  # and is not already swap, so a change here is always a real change.
-  when:
-    - install_docker_swapfile.stat.exists
-    - install_docker_swapblkid.stdout != "swap"
+    cmd: /sbin/mkswap /swapfile
+  # Only when it is not already a swap area.
+  when: install_docker_swapblkid.stdout != "swap"
   changed_when: true
 
 - name: Enable the swap file now
   ansible.builtin.command:
-    cmd: swapon /swapfile
-  register: install_docker_swapon
-  changed_when: install_docker_swapon.rc == 0
-  failed_when:
-    - install_docker_swapon.rc != 0
-    - "'already' not in install_docker_swapon.stderr"
+    cmd: /sbin/swapon /swapfile
+  # swapon on a file that is already active fails, and that is not an error.
+  when: "'/swapfile' not in install_docker_swapactive.stdout"
+  changed_when: true
 
 - name: Keep the swap file across reboots
   ansible.builtin.lineinfile:
