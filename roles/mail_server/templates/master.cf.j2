@@ -3,7 +3,11 @@
 # Only what sending needs. The submission and smtps services are absent on
 # purpose: no user ever authenticates to this box, so there is nothing to
 # authenticate against.
-smtp      inet  n       -       y       -       -       smtpd
+# Column 5 is chroot. It must be `n` here: a chrooted smtpd sees /run/opendkim
+# as empty, never finds the milter socket, and waits on it forever. The symptom
+# was a connection that opened, printed the banner, and then hung — every signup
+# timed out after 20 seconds.
+smtp      inet  n       -       n       -       -       smtpd
 pickup    unix  n       -       y       60      1       pickup
 cleanup   unix  n       -       y       -       0       cleanup
 qmgr      unix  n       -       n       300     1       qmgr

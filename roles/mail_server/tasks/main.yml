@@ -121,6 +121,16 @@
 
 # Postfix hands the message to OpenDKIM through a milter, then OpenDKIM signs
 # on the way out.
+# Some Postfix services still chroot; the ones that do look for the milter
+# under /var/spool/postfix. A bind mount keeps both views identical.
+- name: Create the milter directory inside the Postfix spool
+  ansible.builtin.file:
+    path: /var/spool/postfix/var/run/opendkim
+    state: directory
+    owner: opendkim
+    group: opendkim
+    mode: "0755"
+
 - name: Write the Postfix main configuration
   ansible.builtin.template:
     src: main.cf.j2
