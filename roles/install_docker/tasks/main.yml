@@ -75,11 +75,16 @@
   # Apply the daemon config before the first container exists.
   notify: Restart docker
 
+# usermod, not the user module. The user module with `groups: docker` plus an
+# explicit `append` is not enough here: the run that created the account also
+# set www-data, and adding docker afterwards was silently a no-op on this box,
+# leaving the group empty and every deploy failing on a socket permission
+# error. usermod -aG is the operation that actually means "add, keep the rest".
 - name: Let the listed users run Docker
-  ansible.builtin.user:
-    name: "{{ docker_user }}"
-    groups: docker
-    append: true
+  ansible.builtin.command:
+    cmd: "usermod -aG docker {{ docker_user }}"
+  register: install_docker_usermod
+  changed_when: false
   loop: "{{ install_docker_users }}"
   loop_control:
     loop_var: docker_user
