@@ -1,0 +1,64 @@
+# Reverse proxy to an application on loopback.
+#
+# For services that run in Docker (bakmark): the container publishes on
+# 127.0.0.1 and nginx, on the host, is the only public door. Docker edits
+# iptables directly, so a published port ignores ufw; binding to loopback is
+# what actually keeps it off the internet, and this vhost is the way in.
+#
+# Expects: item.domains, item.proxy_pass (host:port), optional item.websocket.
+server {
+    listen      80;
+    listen      [::]:80;
+    server_name {{ item.domains | join(' ') }};
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+
+    location /.well-known/acme-challenge {
+        root {{ nginx_www_dir }};
+        log_not_found off;
+        try_files $uri =404;
+    }
+
+    access_log off;
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name {{ item.domains | join(' ') }};
+
+    ssl_certificate_key     /etc/letsencrypt/live/{{ item.domains | first }}/privkey.pem;
+    ssl_certificate         /etc/letsencrypt/live/{{ item.domains | first }}/fullchain.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/{{ item.domains | first }}/chain.pem;
+    ssl_prefer_server_ciphers on;
+
+    access_log {{ item.log_path|default('/var/log/nginx/') }}{{ item.domains | first }}-ssl-access.log;
+    error_log  {{ item.log_path|default('/var/log/nginx/') }}{{ item.domains | first }}-ssl-error.log;
+
+    # Limits are set by the app; a proxy that guesses differently turns a clear
+    # application error into an opaque 413 or a dropped connection.
+    client_max_body_size {{ item.client_max_body_size | default('1m') }};
+
+    {% for key, value in (nginx_http_headers_default | combine(nginx_http_headers) | combine(item.headers | default({}))).items() -%}
+        add_header  {{ key }} "{{ value }}"  always;
+    {% endfor %}
+
+    location / {
+        proxy_pass         http://{{ item.proxy_pass }};
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        # The app trusts these only from the hosts in allowedDomains; without
+        # them clientAddress is the proxy and every visitor shares one rate limit.
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_set_header   X-Forwarded-Host  $host;
+        {% if item.websocket | default(false) %}
+        proxy_set_header   Upgrade           $http_upgrade;
+        proxy_set_header   Connection        "upgrade";
+        {% endif %}
+        proxy_read_timeout {{ item.proxy_read_timeout | default('60s') }};
+    }
+}

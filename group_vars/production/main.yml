@@ -10,7 +10,13 @@ ssh_provision_user: "provision"
 # NGINX
 nginx_user: www-data
 nginx_group: www-data
-server_templates: "{{ nginx_server_templates_redirects + nginx_server_templates_websites }}"
+# Everything that needs a vhost and a certificate: redirects, static/PHP sites,
+# and reverse proxies. A list added here but not aggregated is silently ignored
+# by both the nginx and the lets_encrypt tasks.
+server_templates: >-
+  {{ nginx_server_templates_redirects
+     + nginx_server_templates_websites
+     + nginx_server_templates_proxies | default([]) }}
 
 nginx_server_templates_redirects:
   - name: "markmeijerman.nl"
