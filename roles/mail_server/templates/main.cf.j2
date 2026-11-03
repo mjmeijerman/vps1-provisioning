@@ -7,10 +7,16 @@ myhostname = {{ mail_server_hostname }}
 mydomain = {{ mail_server_dkim_domain }}
 myorigin = $mydomain
 
-# Loopback only. Anything wider turns a VPS into an open relay the day it is
-# found, and a relay is blacklisted within hours.
-inet_interfaces = loopback-only
+# The containers on this host talk to Postfix over the docker bridge, which is
+# not loopback inside the network namespace: `loopback-only` made the service
+# unreachable from the app and every signup failed to send. Listening on all
+# interfaces is safe because mynetworks below still only relays for loopback and
+# the docker bridge, and port 25 is closed in ufw.
+inet_interfaces = all
 inet_protocols = ipv4
+# Relaying is limited to this machine and the docker bridge. The bridge address
+# is where a container's packets arrive from; without it the app is treated as a
+# stranger and refused.
 mynetworks = {{ mail_server_networks | join(', ') }}
 
 # No local delivery: nobody reads mail on this box.

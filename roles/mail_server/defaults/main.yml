@@ -18,10 +18,13 @@ mail_server_dmarc_report: hello@bakmark.nl
 mail_server_opendkim_key_dir: /etc/opendkim/keys/{{ mail_server_dkim_domain }}
 mail_server_opendkim_socket: local:/run/opendkim/opendkim.sock
 
-# Only these may relay. Loopback is the application on this box.
+# Only these may relay: this machine, and the docker bridge the containers sit
+# on. 172.16/12 rather than one address, because the bridge changes when Docker
+# is restarted.
 mail_server_networks:
   - 127.0.0.0/8
   - "::1/128"
+  - 172.16.0.0/12
 
 # Anything larger is not a newsletter confirmation.
 mail_server_message_size_limit: 10240000
