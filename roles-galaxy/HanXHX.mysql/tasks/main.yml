@@ -61,14 +61,14 @@
   ansible.builtin.import_tasks: 'secure.yml'
 
 - name: MYSQL_DB | Create databases
-  community.mysql.mysql_db:
+  ansible.mysql.mysql_db:
     name: "{{ item }}"
     state: present
     login_unix_socket: "{{ mariadb_socket }}"
   loop: "{{ mariadb_databases }}"
 
 - name: MYSQL_USER | Manages users...
-  community.mysql.mysql_user:
+  ansible.mysql.mysql_user:
     name: "{{ item.name }}"
     password: "{{ item.password }}"
     priv: "{{ item.priv }}"

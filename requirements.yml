@@ -28,9 +28,10 @@ roles:
   - src: geerlingguy.certbot
     version: 5.1.0
 
-# ansible.posix supplies authorized_key and acl; community.mysql is required by
-# HanXHX.mysql. Both used to be assumed present because they were installed
-# globally on the machine that ran the playbook.
+# ansible.posix supplies authorized_key and acl. ansible.mysql is the successor
+# of community.mysql, whose modules HanXHX.mysql calls: community.mysql is
+# deprecated and goes away in 6.0.0, and it pulls ansible.mysql in as a
+# dependency anyway, so both end up installed.
 collections:
   - name: ansible.posix
-  - name: community.mysql
+  - name: ansible.mysql
