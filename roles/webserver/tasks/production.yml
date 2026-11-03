@@ -27,7 +27,12 @@
 - name: Create deploy user
   ansible.builtin.user:
     name: "{{ deploy_user }}"
+    # append is not optional here. Without it this task sets the group list to
+    # exactly [www-data] and silently drops every other membership, including
+    # the docker group install_docker added — which is why deploys kept failing
+    # on a docker.sock permission error after a provisioning run.
     groups: www-data
+    append: true
     shell: /bin/bash
     state: present
     password: "$6$rounds=100000$Ma2q.iH0Aj6l3SAp$oYVMw4G0AOoCTiLEews.B7DEYAtg39JQg8y2dUx8zVsL22/rVK6KatHvUGrl/PYZUIghg1ic9/TkB7loCTznO1"
