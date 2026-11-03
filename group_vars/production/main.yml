@@ -61,6 +61,17 @@ ufw_rules_to_create:
     rule: allow
   - to_port: 443 # Nginx
     rule: allow
+  # Containers reach services on this host over the docker bridge, and ufw's
+  # default incoming policy drops that traffic: the app could not open port 25
+  # and every signup failed to send. Scoped to the private bridge range, so the
+  # internet still cannot reach these ports; 25 in particular stays closed from
+  # outside.
+  - rule: allow
+    interface: docker0
+    direction: in
+  - rule: allow
+    interface: br-+
+    direction: in
 
 # PHP
 
