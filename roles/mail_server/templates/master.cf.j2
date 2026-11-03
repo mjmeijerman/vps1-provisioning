@@ -7,6 +7,7 @@
 # as empty, never finds the milter socket, and waits on it forever. The symptom
 # was a connection that opened, printed the banner, and then hung — every signup
 # timed out after 20 seconds.
+# service  type  private unpriv  chroot  wakeup  maxproc  command
 smtp      inet  n       -       n       -       -       smtpd
 pickup    unix  n       -       y       60      1       pickup
 cleanup   unix  n       -       y       -       0       cleanup

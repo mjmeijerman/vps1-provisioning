@@ -149,6 +149,17 @@
     mode: "0644"
   notify: Reload postfix
 
+# master.cf is whitespace-sensitive: eight columns per service, and a missing
+# one is read as a different setting rather than as an error. Postfix accepted
+# a seven-column smtp line silently and then started no smtpd at all, so the
+# port accepted connections and never answered.
+- name: Validate the Postfix master configuration
+  ansible.builtin.command:
+    cmd: postconf -M
+  register: mail_server_master_check
+  changed_when: false
+  failed_when: mail_server_master_check.rc != 0
+
 - name: Enable and start Postfix and OpenDKIM
   ansible.builtin.systemd:
     name: "{{ item }}"
