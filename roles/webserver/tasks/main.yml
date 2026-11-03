@@ -7,4 +7,8 @@
 
 - name: Import production/staging tasks
   ansible.builtin.import_tasks: production.yml
-  when: "'production'"
+  # Intent: these tasks are for real hosts only. The old condition was the
+  # bare string 'production', which was truthy only because a non-empty string
+  # used to count as true; ansible-core now rejects a non-boolean conditional.
+  # Ask the real question instead: is this host in the production group?
+  when: inventory_hostname in groups['production'] | default([])
