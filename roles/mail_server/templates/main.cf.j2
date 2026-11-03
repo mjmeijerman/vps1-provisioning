@@ -1,0 +1,46 @@
+# Managed by Ansible (vps1-provisioning, role mail_server).
+#
+# Outgoing mail from the application on this box. No virtual users, no
+# mailboxes: Postfix accepts from loopback, OpenDKIM signs, and it delivers.
+
+myhostname = {{ mail_server_hostname }}
+mydomain = {{ mail_server_dkim_domain }}
+myorigin = $mydomain
+
+# Loopback only. Anything wider turns a VPS into an open relay the day it is
+# found, and a relay is blacklisted within hours.
+inet_interfaces = loopback-only
+inet_protocols = ipv4
+mynetworks = {{ mail_server_networks | join(', ') }}
+
+# No local delivery: nobody reads mail on this box.
+mydestination =
+
+# Hand every message to OpenDKIM on the way out.
+smtpd_milters = {{ mail_server_opendkim_socket }}
+non_smtpd_milters = {{ mail_server_opendkim_socket }}
+milter_default_action = accept
+milter_protocol = 6
+
+smtpd_banner = $myhostname ESMTP
+biff = no
+append_dot_mydomain = no
+readme_directory = no
+
+# Helo and reverse DNS are checked by the receiver; being wrong about our own
+# name is the one thing we control.
+smtp_helo_name = {{ mail_server_hostname }}
+
+message_size_limit = {{ mail_server_message_size_limit }}
+mailbox_size_limit = 0
+
+smtpd_use_tls = no
+smtp_tls_security_level = may
+
+# A cold IP that sends a burst is throttled by receivers anyway; staying under
+# the limits is cheaper than being told to.
+default_destination_rate_delay = 1s
+smtp_destination_concurrency_limit = 2
+
+# Bounce traffic needs a real address to come back to.
+recipient_delimiter = +

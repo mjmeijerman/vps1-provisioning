@@ -1,0 +1,29 @@
+# Managed by Ansible (vps1-provisioning, role mail_server).
+#
+# OpenDKIM signs on the way out. Verification of inbound mail is not this
+# server's job: it accepts mail from the application on loopback only.
+AutoRestart            Yes
+AutoRestartRate        10/1h
+Syslog                 Yes
+SyslogSuccess          Yes
+LogWhy                 Yes
+
+UserID                 opendkim:opendkim
+UMask                  007
+
+Socket                 {{ mail_server_opendkim_socket }}
+PidFile                /run/opendkim/opendkim.pid
+
+# The tables that say which domain signs with which key.
+KeyTable               /etc/opendkim/KeyTable
+SigningTable           refile:/etc/opendkim/SigningTable
+ExternalIgnoreList     refile:/etc/opendkim/TrustedHosts
+InternalHosts          refile:/etc/opendkim/TrustedHosts
+
+# rsa-sha256 is what every receiving server understands.
+SignatureAlgorithm     rsa-sha256
+Canonicalization       relaxed/relaxed
+
+OversignHeaders        From
+Mode                   sv
+SubDomains             Yes

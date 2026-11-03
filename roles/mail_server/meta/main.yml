@@ -1,0 +1,12 @@
+---
+galaxy_info:
+  role_name: mail_server
+  author: mjmeijerman
+  description: Postfix and OpenDKIM for outgoing application mail
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+dependencies: []

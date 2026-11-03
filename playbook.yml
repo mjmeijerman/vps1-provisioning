@@ -20,6 +20,7 @@
     - f500.php8
     - f500.php_composer
     - install_docker
+    - mail_server
     - f500.vim
     - f500.debian
 

@@ -63,3 +63,38 @@ See the `bakmark` repository's README.
 `server_templates` is the aggregate, and it is what the nginx and letsencrypt
 tasks loop over. A list that is not added to it is silently ignored by both, so
 a vhost can exist in config and nowhere else.
+
+
+## Mail
+
+`mail_server` installs Postfix and OpenDKIM so the application can send through
+`127.0.0.1:25`. Per D6 there is no ESP and no relay: the SPF and DKIM signals
+are ours.
+
+Postfix is `loopback-only` and relays for `127.0.0.0/8` and `::1` only. It has
+no submission or smtps service, because no user authenticates to this box.
+
+The DKIM key is generated once and **never regenerated**. Rotating it means a
+DNS change plus a window where signatures fail, so it must not happen because a
+playbook ran again. Delete the key deliberately if it ever leaks.
+
+### DNS the mail needs
+
+The role prints these at the end of a run. All four are required:
+
+| Record | Value |
+|---|---|
+| `TXT default._domainkey.news.bakmark.nl` | the content of `/etc/opendkim/keys/news.bakmark.nl/default.txt` |
+| `TXT news.bakmark.nl` | `v=spf1 ip4:5.79.100.71 -all` |
+| `TXT _dmarc.bakmark.nl` | `v=DMARC1; p=none; rua=mailto:hello@bakmark.nl` |
+| `PTR 5.79.100.71` | `mail.bakmark.nl` (LeaseWeb portal) |
+
+Until SPF and DKIM exist, mail leaves correctly signed but unauthenticated:
+receiving servers have nothing to check the signature against and treat it as a
+cold IP, which is the worst case D6 describes.
+
+### Before the form goes live
+
+Send to a mail-tester.com address and require **≥9/10**, then send to a real
+Gmail and Outlook address and check the folder. Both, every time the MTA config
+changes.

@@ -1,0 +1,27 @@
+---
+
+# The host that owns the PTR and appears in Received headers. Must match the
+# reverse DNS record, or receiving servers dislike the connection before they
+# read a word of it.
+mail_server_hostname: mail.bakmark.nl
+mail_server_public_ip: 5.79.100.71
+
+# D6: mail goes out as news.<domain>, so reputation damage lands on a
+# subdomain instead of the one that serves the site.
+mail_server_dkim_domain: news.bakmark.nl
+mail_server_dkim_selector: default
+mail_server_dkim_bits: 2048
+
+# Where the reports in the DMARC record go.
+mail_server_dmarc_report: hello@bakmark.nl
+
+mail_server_opendkim_key_dir: /etc/opendkim/keys/{{ mail_server_dkim_domain }}
+mail_server_opendkim_socket: local:/run/opendkim/opendkim.sock
+
+# Only these may relay. Loopback is the application on this box.
+mail_server_networks:
+  - 127.0.0.0/8
+  - "::1/128"
+
+# Anything larger is not a newsletter confirmation.
+mail_server_message_size_limit: 10240000

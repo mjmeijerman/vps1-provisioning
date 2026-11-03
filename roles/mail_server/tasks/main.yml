@@ -1,0 +1,171 @@
+---
+# Postfix + OpenDKIM: the smallest thing that sends properly signed mail from
+# our own IP.
+#
+# Per D6 in the bakmark plan: no ESP, no relay, our SPF and our DKIM key. The
+# application on this box sends through this Postfix on 127.0.0.1:25.
+#
+# What this role does NOT do: set SPF, DMARC or the DKIM DNS record. Those live
+# at the registrar, and a playbook that silently depended on them would look
+# healthy while every mail landed in spam. The exact records to publish are in
+# README (Mail) and are printed by the role.
+
+# Answer Postfix's own questions before it is installed: unattended, the
+# package still prompts on a tty and hangs a non-interactive run.
+- name: Preseed the Postfix package questions
+  ansible.builtin.debconf:
+    name: postfix
+    question: "{{ item.question }}"
+    vtype: "{{ item.vtype }}"
+    value: "{{ item.value }}"
+  loop:
+    - question: postfix/main_mailer_type
+      vtype: select
+      value: Internet Site
+    - question: postfix/mailname
+      vtype: string
+      value: "{{ mail_server_hostname }}"
+  loop_control:
+    label: "{{ item.question }}"
+
+- name: Install Postfix and OpenDKIM
+  ansible.builtin.apt:
+    name:
+      - postfix
+      - opendkim
+      - opendkim-tools
+      - mailutils
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Create the OpenDKIM key directory
+  ansible.builtin.file:
+    path: "{{ mail_server_opendkim_key_dir }}"
+    state: directory
+    owner: opendkim
+    group: opendkim
+    mode: "0750"
+
+# The key is generated once and never regenerated: rotating it means a DNS
+# change and a window where signatures fail, so it must not happen because a
+# playbook ran again.
+- name: Check for an existing DKIM key
+  ansible.builtin.stat:
+    path: "{{ mail_server_opendkim_key_dir }}/{{ mail_server_dkim_selector }}.private"
+  register: mail_server_dkim_key
+
+- name: Generate the DKIM key
+  ansible.builtin.command:
+    cmd: >-
+      opendkim-genkey -b {{ mail_server_dkim_bits }} -s {{ mail_server_dkim_selector }}
+      -d {{ mail_server_dkim_domain }} -D {{ mail_server_opendkim_key_dir }}
+      -v
+  when: not mail_server_dkim_key.stat.exists
+  changed_when: not mail_server_dkim_key.stat.exists
+  notify: Restart opendkim
+
+- name: Hand the key to OpenDKIM
+  ansible.builtin.file:
+    path: "{{ mail_server_opendkim_key_dir }}/{{ mail_server_dkim_selector }}.private"
+    owner: opendkim
+    group: opendkim
+    mode: "0600"
+
+- name: Create the OpenDKIM runtime directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: opendkim
+    group: opendkim
+    mode: "0755"
+  loop:
+    - /run/opendkim
+    - /etc/opendkim/keys
+
+- name: Write the OpenDKIM key table
+  ansible.builtin.template:
+    src: KeyTable.j2
+    dest: /etc/opendkim/KeyTable
+    owner: opendkim
+    group: opendkim
+    mode: "0640"
+  notify: Restart opendkim
+
+- name: Write the OpenDKIM signing table
+  ansible.builtin.template:
+    src: SigningTable.j2
+    dest: /etc/opendkim/SigningTable
+    owner: opendkim
+    group: opendkim
+    mode: "0640"
+  notify: Restart opendkim
+
+- name: Write the list of domains OpenDKIM will sign for
+  ansible.builtin.template:
+    src: TrustedHosts.j2
+    dest: /etc/opendkim/TrustedHosts
+    owner: opendkim
+    group: opendkim
+    mode: "0640"
+  notify: Restart opendkim
+
+- name: Write the OpenDKIM configuration
+  ansible.builtin.template:
+    src: opendkim.conf.j2
+    dest: /etc/opendkim.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart opendkim
+
+# Postfix hands the message to OpenDKIM through a milter, then OpenDKIM signs
+# on the way out.
+- name: Write the Postfix main configuration
+  ansible.builtin.template:
+    src: main.cf.j2
+    dest: /etc/postfix/main.cf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload postfix
+
+- name: Write the Postfix master configuration
+  ansible.builtin.template:
+    src: master.cf.j2
+    dest: /etc/postfix/master.cf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload postfix
+
+- name: Enable and start Postfix and OpenDKIM
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - opendkim
+    - postfix
+
+# Postfix must not be an open relay, and it must accept mail from the app.
+# Checked here rather than assumed: a misconfigured mynetworks is how a VPS
+# becomes a spam cannon within a day of being found.
+- name: Verify Postfix is not an open relay
+  ansible.builtin.shell:
+    cmd: >-
+      set -o pipefail &&
+      postconf -h mynetworks_style mynetworks | tr '\n' ' '
+    executable: /bin/bash
+  register: mail_server_mynetworks
+  changed_when: false
+
+- name: Report the DNS records this configuration expects
+  ansible.builtin.debug:
+    msg: |
+      Publish these, or every mail lands in spam:
+        TXT  {{ mail_server_dkim_selector }}._domainkey.{{ mail_server_dkim_domain }}  (content below)
+        TXT  {{ mail_server_dkim_domain }}          "v=spf1 ip4:{{ mail_server_public_ip }} -all"
+        TXT  _dmarc.{{ mail_server_dkim_domain }}   "v=DMARC1; p=none; rua=mailto:{{ mail_server_dmarc_report }}"
+        PTR  {{ mail_server_public_ip }} -> {{ mail_server_hostname }}
+      Postfix mynetworks: {{ mail_server_mynetworks.stdout }}
