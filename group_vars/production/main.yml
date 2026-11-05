@@ -16,6 +16,7 @@ nginx_group: www-data
 server_templates: >-
   {{ nginx_server_templates_redirects
      + nginx_server_templates_websites
+     + nginx_server_templates_static | default([])
      + nginx_server_templates_proxies | default([]) }}
 
 nginx_server_templates_redirects:

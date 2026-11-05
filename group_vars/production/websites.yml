@@ -73,6 +73,34 @@ nginx_server_templates_proxies:
       Referrer-Policy: no-referrer
       X-Frame-Options: DENY
 
+# Sites that are a directory of files and nothing else, pushed there by that
+# project's own deploy script. They are their own list on purpose: the WordPress
+# tasks in the webserver role loop over nginx_server_templates_websites and empty
+# a site's directory (then download core into it) whenever wp-config.php is
+# absent, which would wipe one of these on every provision.
+escape_root: "{{ websites_root }}/escape"
+
+nginx_server_templates_static:
+  - name: escape
+    domains:
+      - "escape.markmeijerman.nl"
+    src: "{{ inventory_dir }}/roles/webserver/templates/https.conf.j2"
+    index: index.html
+    web_root: "{{ escape_root }}"
+    headers:
+      # Every room is one HTML file with an inline module next to a local copy of
+      # three.js: no CDN, no webfonts, no calls out. The exception is PC Doctor's
+      # voicemail, fetched from this same origin, so connect-src 'self' covers
+      # it. data: and blob: are for the canvas textures and the camera snapshot
+      # the shrink ray takes.
+      Content-Security-Policy: >-
+        default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';
+        img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self' data:;
+        connect-src 'self'; frame-ancestors 'none'; base-uri 'self'
+      X-Content-Type-Options: nosniff
+      Referrer-Policy: no-referrer
+      X-Frame-Options: DENY
+
 nginx_server_templates_websites:
 #  - name: instachicks
 #    label: 'Insta Chicks'

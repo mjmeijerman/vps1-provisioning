@@ -174,10 +174,31 @@ See the `bakmark` repository's README.
 | `nginx_server_templates_redirects` | `redirect.conf.j2` | a domain that just 301s or 302s |
 | `nginx_server_templates_websites` | `https.conf.j2`, `wordpress-https.conf.j2` | files on disk, optionally PHP |
 | `nginx_server_templates_proxies` | `proxy-https.conf.j2` | an app on loopback, e.g. a container |
+| `nginx_server_templates_static` | `https.conf.j2` | a directory of files another repo pushes into |
 
 `server_templates` is the aggregate, and it is what the nginx and letsencrypt
 tasks loop over. A list that is not added to it is silently ignored by both, so
 a vhost can exist in config and nowhere else.
+
+### Static sites
+
+`escape.markmeijerman.nl` is the one entry in `nginx_server_templates_static`
+today, serving the rooms from `escape_root` = `/home/websites/escape`.
+
+It has its own list because of one trap: `webserver`'s WordPress tasks loop over
+`nginx_server_templates_websites` and, for any entry without a `wp-config.php`,
+they `rm -rf` that entry's directory and download WordPress core into it. A
+static site added to that list would be emptied on every provision. The static
+list gets the directory and nothing else:
+
+- `webserver` creates `web_root` owned by `deploy`, group `www-data`, mode 0755,
+- `lets_encrypt` writes the vhost and issues the certificate like any other,
+- the owning repository's `./deploy.sh` rsyncs into it as `deploy` (`--delete`,
+  so the box mirrors the build, not a pile of old pages).
+
+Order of operations for a new one: DNS first (certbot stops nginx when it cannot
+resolve the name), then `make provision-prod`, then the project's deploy script —
+the directory exists but is empty until that first push.
 
 
 ## Mail
