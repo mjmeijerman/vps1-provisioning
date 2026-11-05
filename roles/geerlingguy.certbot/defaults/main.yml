@@ -51,6 +51,13 @@ certbot_create_standalone_stop_services:
 # Available options: 'package', 'snap', 'source'.
 certbot_install_method: 'package'
 
+# The package to install. This used to come from a variables file chosen per
+# distribution with a `first_found` lookup against a relative path, which only
+# resolved inside the role on the machine it was written on: on a fresh box it
+# fails with "No file was found when using first_found". Debian and Ubuntu both
+# ship it as `certbot` now; Ubuntu 16.04's `letsencrypt` is long gone.
+certbot_package: certbot
+
 # Source install configuration.
 certbot_repo: https://github.com/certbot/certbot.git
 certbot_version: master

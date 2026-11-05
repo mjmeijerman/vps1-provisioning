@@ -80,6 +80,10 @@ mariadb_replication_port: '3306'
 
 mariadb_backup_dir: '/var/backups/tmp-mysql'
 
+# Debian ships the service as "mariadb"; the role used to change this to
+# "mysql" for buster only.
+mariadb_default_service_name: 'mariadb'
+
 mariadb_service_name: '{{ mariadb_default_service_name if mariadb_origin == "default" else "mariadb" }}'
 
 # Master

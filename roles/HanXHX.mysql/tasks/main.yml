@@ -3,16 +3,12 @@
 # Vendored from HanXHX.mysql 2.2.1 and reduced to what this box runs: one
 # MariaDB node on Debian, from the upstream repository. The galera and
 # replication branches are gone; nothing here used them.
-
-- name: Load the distribution specific variables
-  ansible.builtin.include_vars: "{{ lookup('first_found', params) }}"
-  vars:
-    params:
-      files:
-        - '{{ ansible_distribution }}-{{ ansible_distribution_release }}.yml'
-        - default.yml
-      paths:
-        - 'vars'
+#
+# The role used to pick a variables file per distribution with a `first_found`
+# lookup against a relative "vars" path. It resolved to the role on this box and
+# nowhere else: on a fresh machine it fails with "No file was found when using
+# first_found". There was one value in those files, the service name, and it is
+# a default now.
 
 - name: Check whether MariaDB is already installed
   ansible.builtin.stat:
