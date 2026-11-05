@@ -190,7 +190,11 @@
 # The only check that proves the mail system works: a banner on port 25. A
 # "started" unit, an open socket and a listening port all looked healthy while
 # nothing was there to answer.
+# The three checks below run for real even in check mode. They only read, and
+# skipped they register nothing: a dry run used to fail here with a banner
+# assertion that had never been given a value.
 - name: Wait for the SMTP banner
+  check_mode: false
   ansible.builtin.wait_for:
     host: "{{ mail_server_banner_host }}"
     port: 25
@@ -201,6 +205,7 @@
 # covers the other direction: a server that accepts the connection and says
 # nothing would hold this open just as long.
 - name: Read the SMTP banner
+  check_mode: false
   ansible.builtin.shell:
     cmd: |
       set -o pipefail
@@ -214,6 +219,7 @@
   timeout: 20
 
 - name: Refuse to report success without a working SMTP service
+  check_mode: false
   ansible.builtin.assert:
     that:
       - "'220' in mail_server_banner.stdout"
