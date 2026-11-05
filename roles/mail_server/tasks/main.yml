@@ -53,6 +53,7 @@
 - name: Check for an existing DKIM key
   ansible.builtin.stat:
     path: "{{ mail_server_opendkim_key_dir }}/{{ mail_server_dkim_selector }}.private"
+    get_checksum: false
   register: mail_server_dkim_key
 
 - name: Generate the DKIM key

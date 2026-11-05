@@ -117,6 +117,10 @@
 - name: Check for a swap file
   ansible.builtin.stat:
     path: /swapfile
+    # Without this the module hashes the file to report a checksum, and this
+    # file is 2 GB: sha1sum of it takes eight seconds on this box, for a value
+    # nothing reads.
+    get_checksum: false
   register: install_docker_swapfile
 
 - name: Create the swap file
