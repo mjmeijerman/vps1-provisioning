@@ -1,0 +1,36 @@
+---
+
+- name: Write the global bashrc
+  ansible.builtin.copy:
+    src: bash.bashrc
+    dest: /etc/bash.bashrc
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Write the bashrc for root and the skeleton
+  ansible.builtin.copy:
+    src: .bashrc
+    dest: "{{ item }}/.bashrc"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - /root
+    - /etc/skel
+
+# getent returns the whole passwd database in one call: no shell pipeline, and
+# no second lookup per user.
+- name: Read the passwd database
+  ansible.builtin.getent:
+    database: passwd
+  when: bashrc_users | length > 0
+
+- name: Write the bashrc of each listed user
+  ansible.builtin.copy:
+    src: .bashrc
+    dest: "{{ ansible_facts.getent_passwd[item][4] }}/.bashrc"
+    owner: "{{ item }}"
+    group: "{{ item }}"
+    mode: "0644"
+  loop: "{{ bashrc_users }}"

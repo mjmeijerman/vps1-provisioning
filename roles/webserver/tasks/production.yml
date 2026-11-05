@@ -101,6 +101,7 @@
 - name: Check to see if file exists
   ansible.builtin.stat:
     path: "/home/websites/{{ item.name }}/wp-config.php"
+    get_checksum: false
   register: webserver_wp_config
   loop: "{{ nginx_server_templates_websites }}"
 

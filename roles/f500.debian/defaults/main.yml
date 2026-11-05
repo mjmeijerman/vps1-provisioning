@@ -1,0 +1,15 @@
+---
+
+debian_cache_update: true
+debian_cache_valid_time: 14400
+
+debian_repo_url: 'ftp.us.debian.org'
+debian_codename: '{{ ansible_distribution_release }}'
+
+python_package: 'python'
+
+# The configparser package is named after the interpreter, and only exists for
+# the two interpreters Debian still ships. Anything else gets no package, which
+# is what the two conditionals in the original role did.
+debian_python_configparser: >-
+  {{ {'python3': 'python3-configargparse', 'python': 'python-configparser'}.get(python_package) }}

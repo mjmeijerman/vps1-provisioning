@@ -1,0 +1,132 @@
+---
+# PHP 8 from deb.sury.org.
+#
+# The repository itself is not set up here: roles/php_sury_repo owns it, with a
+# signed-by keyring. This role used to add its own unsigned copy as well, after
+# that cleanup had run, which left apt reading the same repository twice and
+# warning about it on every call.
+
+- name: Validate the version value
+  ansible.builtin.fail:
+    msg: "The value of php8_version must >= 8.0 and < 9.0"
+  when: not (php8_version >= 8.0 and php8_version < 9.0)
+
+- name: Install PHP CLI
+  ansible.builtin.apt:
+    name: "php{{ php8_version }}-cli"
+    state: present
+
+- name: Configure PHP for the CLI
+  ansible.builtin.template:
+    src: php.ini.j2
+    dest: "/etc/php/{{ php8_version }}/cli/conf.d/99-customization.ini"
+    mode: "0644"
+  vars:
+    php8_ini_directives: "{{ php8_ini_directives_default | combine(php8_ini_directives_global) | combine(php8_ini_directives_cli) }}"
+
+- name: Install the PHP module development headers
+  ansible.builtin.apt:
+    name: "php{{ php8_version }}-dev"
+    state: present
+  when: php8_enable_dev | bool
+
+- name: Install the PHP Apache2 module
+  ansible.builtin.apt:
+    name: "libapache2-mod-php{{ php8_version }}"
+    state: present
+  when: php8_enable_apache | bool
+
+- name: Configure PHP for Apache2
+  ansible.builtin.template:
+    src: php.ini.j2
+    dest: "/etc/php/{{ php8_version }}/apache2/conf.d/99-customization.ini"
+    mode: "0644"
+  vars:
+    php8_ini_directives: "{{ php8_ini_directives_default | combine(php8_ini_directives_global) | combine(php8_ini_directives_apache) }}"
+  when: php8_enable_apache | bool
+  notify: Restart Apache
+
+- name: Install the PHP CGI binary
+  ansible.builtin.apt:
+    name: "php{{ php8_version }}-cgi"
+    state: present
+  when: php8_enable_cgi | bool
+
+- name: Configure PHP for CGI
+  ansible.builtin.template:
+    src: php.ini.j2
+    dest: "/etc/php/{{ php8_version }}/cgi/conf.d/99-customization.ini"
+    mode: "0644"
+  vars:
+    php8_ini_directives: "{{ php8_ini_directives_default | combine(php8_ini_directives_global) | combine(php8_ini_directives_cgi) }}"
+  when: php8_enable_cgi | bool
+
+- name: Install the PHP FPM binary
+  ansible.builtin.apt:
+    name: "php{{ php8_version }}-fpm"
+    state: present
+  when: php8_enable_fpm | bool
+
+- name: Configure PHP for FPM
+  ansible.builtin.template:
+    src: php.ini.j2
+    dest: "/etc/php/{{ php8_version }}/fpm/conf.d/99-customization.ini"
+    mode: "0644"
+  vars:
+    php8_ini_directives: "{{ php8_ini_directives_default | combine(php8_ini_directives_global) | combine(php8_ini_directives_fpm) }}"
+  when: php8_enable_fpm | bool
+  notify: Restart PHP FPM
+
+- name: Configure FPM
+  ansible.builtin.template:
+    src: php-fpm.conf.j2
+    dest: "/etc/php/{{ php8_version }}/fpm/php-fpm.conf"
+    mode: "0644"
+  when: php8_enable_fpm | bool
+  notify: Restart PHP FPM
+
+- name: Ensure the working directory of the standard pool exists
+  ansible.builtin.file:
+    path: "{{ php8_fpm_pool_chdir }}"
+    state: directory
+    mode: "0755"
+  when: php8_enable_fpm | bool and php8_fpm_pool_enabled | bool
+
+- name: Configure the standard pool for FPM
+  ansible.builtin.template:
+    src: php-fpm-pool.conf.j2
+    dest: "/etc/php/{{ php8_version }}/fpm/pool.d/{{ php8_fpm_pool_name }}.conf"
+    mode: "0644"
+  when: php8_enable_fpm | bool and php8_fpm_pool_enabled | bool
+  notify: Restart PHP FPM
+
+- name: Remove the standard pool for FPM
+  ansible.builtin.file:
+    path: "/etc/php/{{ php8_version }}/fpm/pool.d/{{ php8_fpm_pool_name }}.conf"
+    state: absent
+  when: php8_enable_fpm | bool and not php8_fpm_pool_enabled | bool
+  notify: Restart PHP FPM
+
+- name: Enable the FPM service
+  ansible.builtin.service:
+    name: "php{{ php8_version }}-fpm"
+    enabled: true
+  when: php8_enable_fpm | bool
+
+- name: Install the PHP extensions
+  ansible.builtin.apt:
+    name: "{{ php8_extensions | map('prefix', 'php-') | list }}"
+    state: present
+  when: php8_extensions | length > 0
+  notify:
+    - Restart Apache
+    - Restart PHP FPM
+
+- name: Install the versioned PHP extensions
+  ansible.builtin.apt:
+    name: "{{ php8_versioned_extensions | map('prefix', 'php' ~ php8_version ~ '-') | list }}"
+    state: present
+  when: php8_versioned_extensions | length > 0
+  notify:
+    - Restart Apache
+    - Restart PHP FPM

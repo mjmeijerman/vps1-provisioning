@@ -1,0 +1,149 @@
+---
+# Nginx from nginx.org, with our dhparam and the vhost layout under
+# sites-available. The vhosts themselves belong to roles/webserver.
+
+- name: Add the nginx.org signing key
+  ansible.builtin.get_url:
+    url: https://nginx.org/keys/nginx_signing.key
+    dest: /etc/apt/trusted.gpg.d/nginx.asc
+    mode: "0644"
+
+- name: Add the nginx.org repository
+  ansible.builtin.apt_repository:
+    repo: "deb http://nginx.org/packages/debian/ {{ ansible_distribution_release }} nginx"
+    state: present
+    update_cache: false
+
+- name: Add the nginx.org source repository
+  ansible.builtin.apt_repository:
+    repo: "deb-src http://nginx.org/packages/debian/ {{ ansible_distribution_release }} nginx"
+    state: present
+    update_cache: true
+
+- name: Install nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+
+# One shell run for all four directories. A file module call costs half a second
+# on this box and there is one per directory.
+- name: Create the www and configuration directories
+  ansible.builtin.shell:
+    cmd: |
+      set -u
+      for dir in {{ _nginx_config_dirs | join(' ') }}; do
+          if [ ! -d "$dir" ]; then
+              install -d -o root -g root -m 0755 "$dir"
+              echo "created: $dir"
+          fi
+      done
+      if [ ! -d {{ nginx_www_dir }} ]; then
+          install -d -o {{ nginx_user }} -g {{ nginx_group }} -m 0755 {{ nginx_www_dir }}
+          echo "created: {{ nginx_www_dir }}"
+      fi
+      exit 0
+    executable: /bin/sh
+  vars:
+    _nginx_config_dirs:
+      - /etc/nginx/conf.d
+      - /etc/nginx/sites-available
+      - /etc/nginx/sites-enabled
+  register: nginx_directories
+  changed_when: "'created: ' in nginx_directories.stdout"
+
+- name: Copy the dhparam file
+  ansible.builtin.copy:
+    src: ffdhe4096.pem
+    dest: "/etc/nginx/dh{{ nginx_dhparam_bits }}.pem"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart nginx
+
+- name: Write nginx.conf
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart nginx
+
+- name: Write fastcgi_params
+  ansible.builtin.template:
+    src: fastcgi_params.j2
+    dest: /etc/nginx/fastcgi_params
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart nginx
+
+# The distribution's default vhosts, gone in one run: four file modules cost two
+# seconds and the files never come back.
+- name: Remove the distribution's default vhosts
+  ansible.builtin.shell:
+    cmd: |
+      set -u
+      for f in {{ _nginx_distribution_files | join(' ') }}; do
+          if [ -e "$f" ]; then
+              rm -f "$f"
+              echo "removed: $f"
+          fi
+      done
+      exit 0
+    executable: /bin/sh
+  vars:
+    _nginx_distribution_files:
+      - /etc/nginx/conf.d/default.conf
+      - /etc/nginx/conf.d/default
+      - /etc/nginx/sites-available/default
+      - /etc/nginx/sites-enabled/default
+  register: nginx_distribution_files
+  changed_when: "'removed: ' in nginx_distribution_files.stdout"
+  notify: Restart nginx
+
+- name: Remove the default server
+  ansible.builtin.file:
+    path: "/etc/nginx/{{ item }}"
+    state: absent
+  loop:
+    - sites-available/default.conf
+    - sites-enabled/default.conf
+  when: not nginx_set_default_server | bool
+  notify: Restart nginx
+
+- name: Write the default server
+  ansible.builtin.copy:
+    src: default.conf
+    dest: /etc/nginx/sites-available/default.conf
+    owner: root
+    group: root
+    mode: "0644"
+  when: nginx_set_default_server | bool
+  notify: Restart nginx
+
+- name: Activate the default server
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/default.conf
+    dest: /etc/nginx/sites-enabled/default.conf
+    state: link
+  when: nginx_set_default_server | bool
+  notify: Restart nginx
+
+- name: Write the other servers
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "/etc/nginx/sites-available/{{ item.name }}.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ nginx_server_templates }}"
+  notify: Restart nginx
+
+- name: Activate the other servers
+  ansible.builtin.file:
+    src: "/etc/nginx/sites-available/{{ item.name }}.conf"
+    dest: "/etc/nginx/sites-enabled/{{ item.name }}.conf"
+    state: link
+  loop: "{{ nginx_server_templates }}"
+  notify: Restart nginx

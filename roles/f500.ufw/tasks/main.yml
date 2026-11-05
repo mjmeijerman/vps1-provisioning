@@ -1,0 +1,88 @@
+---
+# The firewall, touched only where it differs from what is already there.
+#
+# Every ufw call that changes the ruleset rewrites the whole iptables set, and
+# on this box that costs up to three seconds. The community.general.ufw module
+# also runs `ufw status verbose` and greps the rule files twice per rule, so a
+# role with five unchanged rules and an unchanged policy still spent 13 seconds
+# and reloaded the firewall for the default-policy task alone.
+#
+# This runs the CLI once and asks `ufw --dry-run` first, which is the same
+# question the module asks, but without four extra subprocesses per rule.
+
+- name: Install ufw
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+
+- name: Apply the firewall state
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      set -u
+
+      # Apply one rule, unless ufw already has it. --dry-run reports
+      # "Skipping unchanged" for a rule that is already there.
+      apply() {
+          if ufw --dry-run "$@" 2>&1 | grep -q '^Skipping'; then
+              return 0
+          fi
+          if ! ufw "$@" >/dev/null 2>&1; then
+              echo "failed: ufw $*" >&2
+              ufw_errors=1
+              return 1
+          fi
+          echo "applied: ufw $*"
+      }
+
+      ufw_errors=0
+
+      {# Each rule dictionary becomes the words ufw expects, in ufw's order:
+         verb, direction, interface, port, protocol, from. #}
+      {% for rule in ufw_rules_to_create %}
+      {% set words = [rule.rule | default('allow')] %}
+      {% if rule.direction is defined %}{% set words = words + [rule.direction] %}{% endif %}
+      {% if rule.interface is defined %}{% set words = words + ['on', rule.interface] %}{% endif %}
+      {% if rule.to_port is defined %}{% set words = words + [rule.to_port | string] %}{% endif %}
+      {% if rule.proto is defined %}{% set words = words + ['proto', rule.proto] %}{% endif %}
+      {% if rule.from_ip is defined %}{% set words = words + ['from', rule.from_ip] %}{% endif %}
+      {% if rule.to_ip is defined %}{% set words = words + ['to', rule.to_ip] %}{% endif %}
+      apply {{ words | join(' ') }}
+      {% endfor %}
+      {% for rule in ufw_rules_to_delete | default([]) %}
+      {% set words = ['delete', rule.rule | default('allow')] %}
+      {% if rule.direction is defined %}{% set words = words + [rule.direction] %}{% endif %}
+      {% if rule.interface is defined %}{% set words = words + ['on', rule.interface] %}{% endif %}
+      {% if rule.to_port is defined %}{% set words = words + [rule.to_port | string] %}{% endif %}
+      {% if rule.proto is defined %}{% set words = words + ['proto', rule.proto] %}{% endif %}
+      apply {{ words | join(' ') }}
+      {% endfor %}
+
+      # The policy is checked against the status output: `ufw default` reloads
+      # the ruleset even when the answer is already the one it would set.
+      {% for policy in ufw_default_policy %}
+      if ! ufw status verbose | grep -q "^Default: .*{{ policy.policy }} ({{ policy.direction }})"; then
+          ufw default {{ policy.policy }} {{ policy.direction }} >/dev/null
+          echo "applied: ufw default {{ policy.policy }} {{ policy.direction }}"
+      fi
+      {% endfor %}
+
+      if ! ufw status verbose | grep -q '^Status: active'; then
+          ufw --force enable >/dev/null
+          echo "applied: ufw enable"
+      fi
+
+      exit "$ufw_errors"
+    executable: /bin/bash
+  register: ufw_state
+  changed_when: "'applied: ' in ufw_state.stdout"
+
+# The script reports success even when it applied nothing, so the state is read
+# back once: a firewall that is not running is the failure that matters.
+- name: Verify the firewall is running
+  ansible.builtin.command:
+    cmd: ufw status verbose
+  register: ufw_status
+  changed_when: false
+  failed_when: >-
+    ufw_status.rc != 0 or 'Status: active' not in ufw_status.stdout

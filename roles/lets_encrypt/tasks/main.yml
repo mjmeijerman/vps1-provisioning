@@ -3,6 +3,7 @@
 - name: Check for absent certificates
   ansible.builtin.stat:
     path: /etc/letsencrypt/live/{{ item.domains | first }}/cert.pem
+    get_checksum: false
   loop: "{{ server_templates }}"
   register: lets_encrypt_certificates
 
