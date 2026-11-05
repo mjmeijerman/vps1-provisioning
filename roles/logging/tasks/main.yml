@@ -43,6 +43,15 @@
     enabled: true
     state: started
 
+# A second mail.* rule would write every mail line twice: Debian's
+# rsyslog.conf already sends mail.* to /var/log/mail.log. This file appeared on
+# the box from an earlier hand-made setup and nothing owns it.
+- name: Remove the duplicate mail rule
+  ansible.builtin.file:
+    path: /etc/rsyslog.d/50-postfix.conf
+    state: absent
+  notify: Restart rsyslog
+
 - name: Rotate the syslog files
   ansible.builtin.copy:
     dest: /etc/logrotate.d/rsyslog-local
@@ -83,8 +92,16 @@
       # Keep a week: long enough to explain "it broke on Tuesday", short enough
       # to stay inside the cap on a busy week.
       MaxRetentionSec={{ logging_journal_retention }}
-      # Boot messages are already on each boot's own line.
-      ForwardToSyslog=no
+      # On, and that is the whole reason rsyslog is installed: since systemd
+      # 246 the default is "no", so a daemon writing to /dev/log (postfix,
+      # opendkim, cron) logs into the journal and nowhere else. The files this
+      # role configures below were empty because of it, and Postfix's bounce
+      # log is the one an application needs to read.
+      #
+      # The copy is bounded twice over: SystemMaxUse above caps the journal, and
+      # logrotate caps these files, so this cannot become the disk problem the
+      # role exists to prevent.
+      ForwardToSyslog=yes
   notify: Restart journald
 
 # nginx logs per vhost, one file per site per stream. Monthly rotation with a
