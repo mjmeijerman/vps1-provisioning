@@ -37,6 +37,24 @@ install_docker_data_owner: "1000"
 install_docker_data_mode: "0700"
 
 # ---------------------------------------------------------------------------
+# Directories with their own owner.
+#
+# The visit counter (bakmark's analytics/): Postgres inside the image is uid 70,
+# so its cluster directory has that owner. The parent stays with the deploy
+# account, because the deploy writes the stack's env file next to it and must
+# not need root to do so. Created here for the same reason as the data
+# directories above: a bind mount Docker creates itself is root-owned and the
+# container then cannot start.
+# ---------------------------------------------------------------------------
+install_docker_extra_dirs:
+  - path: /var/lib/bakmark-analytics
+    owner: "1000"
+    mode: "0700"
+  - path: /var/lib/bakmark-analytics/data
+    owner: "70"
+    mode: "0700"
+
+# ---------------------------------------------------------------------------
 # Host limits
 #
 # The box has 2 GB with MariaDB and several PHP pools already on it. Unbounded

@@ -200,6 +200,19 @@
   loop_control:
     label: "{{ item.name }}"
 
+# Not every bind mount is the app: Postgres keeps its cluster as uid 70, and
+# the analytics parent directory has to be writable by the deploy account.
+- name: Create the other directories a container mounts
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner | int }}"
+    group: "{{ item.owner | int }}"
+    mode: "{{ item.mode }}"
+  loop: "{{ install_docker_extra_dirs }}"
+  loop_control:
+    label: "{{ item.path }}"
+
 - name: Create an application directory per project
   ansible.builtin.file:
     path: "{{ item.path }}"

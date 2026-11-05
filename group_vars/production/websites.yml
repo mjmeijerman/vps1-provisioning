@@ -6,6 +6,7 @@ websites_root: /home/websites
 # proxy passes $host rather than a rewritten name.
 bakmark_staging_port: 8090
 bakmark_production_port: 8085
+bakmark_analytics_port: 8091
 
 nginx_server_templates_proxies:
   - name: bakmark
@@ -41,6 +42,27 @@ nginx_server_templates_proxies:
     # The signup endpoint caps its own body at 64 KiB; let nginx agree instead
     # of rejecting first with its own 413.
     client_max_body_size: "64k"
+
+  # The visit counter (Umami + Postgres) from the bakmark repo's analytics/.
+  # Started and updated by that repo's deploy.sh, which writes its env file;
+  # this vhost is the only public door, exactly like the app's two.
+  - name: bakmark-analytics
+    domains:
+      - "analytics.bakmark.nl"
+    src: "{{ inventory_dir }}/roles/webserver/templates/proxy-https.conf.j2"
+    proxy_pass: "127.0.0.1:{{ bakmark_analytics_port }}"
+    headers:
+      # The dashboard is a Next.js app: it ships inline scripts and styles, and
+      # calls its own origin for stats. The tracker script that visitors load
+      # from the site is served from the same origin.
+      Content-Security-Policy: >-
+        default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval';
+        style-src 'self' 'unsafe-inline'; img-src 'self' data:;
+        connect-src 'self'; font-src 'self' data:;
+        frame-ancestors 'none'; base-uri 'self'
+      X-Content-Type-Options: nosniff
+      Referrer-Policy: no-referrer
+      X-Frame-Options: DENY
 
 nginx_server_templates_websites:
 #  - name: instachicks
