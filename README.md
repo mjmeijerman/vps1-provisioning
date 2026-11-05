@@ -31,7 +31,7 @@ Extra arguments go through untouched:
 Every run prints its slowest tasks when it ends (`profile_tasks` in
 `ansible.cfg`). Read that list before optimising anything.
 
-A full run went from 365s to 168s. What that took, so nobody re-does it:
+A full run went from 365s to 154s. What that took, so nobody re-does it:
 
 - **SSH multiplexing.** One connection for the whole play instead of one per
   task; there are 245 of them.
@@ -52,6 +52,7 @@ A full run went from 365s to 168s. What that took, so nobody re-does it:
 - **`f500.debian` runs once.** It was listed twice in `playbook.yml`.
 - **`cache_valid_time` on every apt task**, and one apt call where a role used to
   make three.
+- **One call to remove the anonymous database users**, not one per host entry.
 
 Checks that need no vault, and no host:
 
@@ -68,28 +69,65 @@ Checks that need no vault, and no host:
 | Docker | `install_docker` | Docker Engine + compose v2 from Docker's repository |
 | Bakmark staging | `install_docker` + `webserver` | container on `127.0.0.1:8090`, nginx in front |
 
-`roles-galaxy/` is downloaded by `make update-ansible-roles` and is overwritten
-on every update. Fixes that have to survive belong in `roles/` or in
-`group_vars/`, not there.
+Every role is in `roles/`. Nothing is installed from Galaxy except collections,
+so `ansible.cfg` has no `roles-galaxy/` on its `roles_path` and there is nothing
+to shadow what this repository owns.
 
 
 ## Roles we own
 
-The nine `f500.*` roles used to come from Galaxy. They are vendored into
-`roles/` now, because every one of them needed changes the published role does
-not have, and `make update-ansible-roles` would have overwritten them. Their
-`meta/main.yml` names the version each was taken from.
+All of them. `roles/*` used to be either ours or downloaded from Galaxy, and
+almost every downloaded role needed a change the published version does not
+have — so every role lives here now, and `meta/main.yml` records the version
+each came from. `make update-collections` installs collections and nothing else.
 
-`roles-galaxy/` still holds `HanXHX.mysql`, `geerlingguy.certbot` and
-`geerlingguy.daemonize`, which nothing here has had to change.
+Four of them need reading before they are edited:
 
-Two of the vendored roles are worth knowing about before editing them:
-
+- `HanXHX.mysql` is MariaDB on a single node. The galera and replication
+  branches were removed, along with the defaults only they used; the config
+  templates and the databases/users path are unchanged.
+- `geerlingguy.certbot` keeps its snap, source and standalone paths, but this
+  box uses the package plus the webroot method. `certbot_auto_renew` is off:
+  `lets_encrypt` runs its own renewal hook.
 - `f500.ufw` applies the rules with a shell script that asks `ufw --dry-run`
   first, instead of the `ufw` module per rule. It is the only role here that can
   lock you out of the box, so run it on its own if you change it.
 - `f500.php8` deliberately does **not** add the deb.sury.org repository:
   `php_sury_repo` owns that, with a signed-by keyring.
+
+
+## A new machine
+
+Role order is load-bearing. The first play sets up apt sources (the sury
+repository before anything reads the apt cache), then base packages, MariaDB,
+nginx, PHP, the deploy account, Docker, mail and logging. The second play adds
+the web users, Certbot and the certificates. Changing the order means checking
+these dependencies:
+
+- `php_sury_repo` refreshes the apt cache immediately after writing its source.
+  As a handler it ran at the end of the play, after `f500.php8` had asked for
+  packages that only exist in that repository.
+- `deploy_account` runs before `install_docker`: that role adds the account to
+  the docker group, creates directories owned by it, and clones the application
+  repositories over SSH as it. It is also what puts github.com in
+  `known_hosts` and installs the deploy key the clone authenticates with.
+- `HanXHX.mysql` runs before `webserver`: the WordPress tasks need the database
+  and user to exist, and `install_apt_packages` runs before both, because the
+  web tasks set ACLs.
+- `geerlingguy.certbot` installs the package before `lets_encrypt` calls it.
+
+Two things the playbook cannot do for you:
+
+- **DNS has to point at the box already.** `lets_encrypt` stops nginx, requests
+  the certificates and starts it again. Without a resolving name the request
+  fails and nginx stays down.
+- **The control machine needs `~/.ssh/id_ed25519.pub`**, which `webserver`
+  installs for the deploy account.
+
+After a rebuild, flush the fact cache: facts are cached for 30 minutes per
+inventory name, so a reinstalled box can be provisioned with the old one's:
+
+    make provision-prod ARGS=--flush-cache
 
 
 ## Docker applications

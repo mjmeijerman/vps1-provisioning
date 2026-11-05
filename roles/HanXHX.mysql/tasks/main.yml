@@ -1,0 +1,75 @@
+---
+
+# Vendored from HanXHX.mysql 2.2.1 and reduced to what this box runs: one
+# MariaDB node on Debian, from the upstream repository. The galera and
+# replication branches are gone; nothing here used them.
+
+- name: Load the distribution specific variables
+  ansible.builtin.include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - '{{ ansible_distribution }}-{{ ansible_distribution_release }}.yml'
+        - default.yml
+      paths:
+        - 'vars'
+
+- name: Check whether MariaDB is already installed
+  ansible.builtin.stat:
+    path: /usr/sbin/mysqld
+    get_checksum: false
+  register: mariadb_exists
+
+- name: Install MariaDB
+  ansible.builtin.import_tasks: install/main.yml
+
+# Six files, one template call each: the only way to make this cheaper is to
+# deploy fewer files.
+- name: Deploy the configuration files
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: "/{{ item | replace('.j2', '') }}"
+    mode: "0644"
+    owner: root
+    group: root
+  register: config
+  notify: Restart MariaDB
+  loop:
+    - etc/mysql/my.cnf
+    - etc/mysql/conf.d/mysqldump.cnf.j2
+    - etc/mysql/mariadb.conf.d/10-extra.cnf.j2
+    - etc/mysql/mariadb.conf.d/50-client.cnf.j2
+    - etc/mysql/mariadb.conf.d/50-mysqld_safe.cnf.j2
+    - etc/mysql/mariadb.conf.d/50-server.cnf.j2
+
+# The restart has to happen before the databases and users are touched, which
+# is not when a handler would normally run.
+- name: Restart MariaDB now
+  ansible.builtin.meta: flush_handlers
+
+- name: Ensure MariaDB is running
+  ansible.builtin.service:
+    name: "{{ mariadb_service_name }}"
+    state: started
+
+- name: Import the secure installation tasks
+  ansible.builtin.import_tasks: secure.yml
+
+- name: Create the databases
+  ansible.mysql.mysql_db:
+    name: "{{ item }}"
+    state: present
+    login_unix_socket: "{{ mariadb_socket }}"
+  loop: "{{ mariadb_databases }}"
+
+- name: Create the users
+  ansible.mysql.mysql_user:
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    priv: "{{ item.priv }}"
+    host: "{{ item.host | default(omit) }}"
+    host_all: "{{ item.host_all | default(omit) }}"
+    state: present
+    login_unix_socket: "{{ mariadb_socket }}"
+  loop: "{{ mariadb_users }}"
+  no_log: "{{ not mariadb_debug_role }}"

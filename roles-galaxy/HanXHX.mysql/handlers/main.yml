@@ -1,7 +1,0 @@
----
-
-- name: restart mariadb
-  ansible.builtin.service:
-    name: "{{ mariadb_service_name }}"
-    state: restarted
-  when: mariadb_notify_restart

@@ -1,0 +1,9 @@
+---
+- name: Install Certbot
+  ansible.builtin.package:
+    name: "{{ certbot_package }}"
+    state: present
+
+- name: Point the certificate tasks at the installed binary
+  ansible.builtin.set_fact:
+    certbot_script: "{{ certbot_package }}"

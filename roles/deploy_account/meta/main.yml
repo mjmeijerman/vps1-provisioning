@@ -1,0 +1,16 @@
+---
+# Ours, not vendored. The account the application deploys use, created in the
+# first play so install_docker can rely on it.
+galaxy_info:
+  role_name: deploy_account
+  author: "Mark Meijerman"
+  description: "The deploy account and the SSH material it needs."
+  company: "Mark Meijerman"
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+  galaxy_tags: []
+dependencies: []

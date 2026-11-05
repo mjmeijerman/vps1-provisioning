@@ -22,15 +22,14 @@ provision-prod-dry:
 syntax-check:
 	ansible-playbook -i hosts playbook.yml --syntax-check
 
-## lint: Checks our own files (roles-galaxy is excluded, see .ansible-lint)
+## lint: Checks every file we own
 .PHONY: lint
 lint:
 	ansible-lint
 
-## update-ansible-roles: Updates the ansible roles and collections
-.PHONY: update-ansible-roles
-update-ansible-roles:
-	ansible-galaxy install -r requirements.yml -f
+## update-collections: Installs the collections the playbook needs
+.PHONY: update-collections
+update-collections:
 	# Collections go to the user's home: the system path belongs to the distro
 	# package and cannot be written without root.
 	ansible-galaxy collection install -r requirements.yml -p ~/.ansible/collections

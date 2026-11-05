@@ -1,0 +1,17 @@
+---
+- name: Clone Certbot into the configured directory
+  ansible.builtin.git:
+    repo: "{{ certbot_repo }}"
+    dest: "{{ certbot_dir }}"
+    version: "{{ certbot_version }}"
+    update: "{{ certbot_keep_updated }}"
+    force: true
+
+- name: Point the certificate tasks at certbot-auto
+  ansible.builtin.set_fact:
+    certbot_script: "{{ certbot_dir }}/certbot-auto"
+
+- name: Make certbot-auto executable
+  ansible.builtin.file:
+    path: "{{ certbot_script }}"
+    mode: "0755"
