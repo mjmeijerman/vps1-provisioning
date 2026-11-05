@@ -29,6 +29,20 @@
     enabled: true
     state: started
 
+# This role writes cron.daily and cron.hourly jobs. A minimal Debian image has
+# no cron package and none of those directories, so the copy fails on
+# /etc/cron.hourly in a fresh box.
+- name: Install cron
+  ansible.builtin.apt:
+    name: cron
+    state: present
+
+- name: Enable and start cron
+  ansible.builtin.service:
+    name: cron
+    enabled: true
+    state: started
+
 - name: Rotate the syslog files
   ansible.builtin.copy:
     dest: /etc/logrotate.d/rsyslog-local
