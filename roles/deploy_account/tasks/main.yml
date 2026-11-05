@@ -25,7 +25,11 @@
     # exactly [www-data] and silently drops every other membership, including
     # the docker group install_docker added — which is why deploys kept failing
     # on a docker.sock permission error after a provisioning run.
-    groups: www-data
+    # adm is what lets a deploy read /var/log/mail.log, which the bounce job
+    # needs: Postfix writes there and nowhere else a deploy can reach.
+    groups:
+      - www-data
+      - adm
     append: true
     shell: /bin/bash
     state: present
