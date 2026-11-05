@@ -23,7 +23,6 @@
     - mail_server
     - logging
     - f500.vim
-    - f500.debian
 
   tasks:
     - name: Write custom mariadb conf file
@@ -41,6 +40,20 @@
         src: "logrotate-nginx"
         dest: "/etc/logrotate.d/nginx"
         mode: "0644"
+
+    # f500.php8 adds the deb.sury.org source itself, without signed-by, and
+    # does it after php_sury_repo has cleaned up. Left alone, apt reads the same
+    # repository twice, warns about it on every call, and downloads the index
+    # twice. The role that owns the source owns the file, so drop the copy the
+    # other one wrote.
+    - name: Remove the unsigned deb.sury.org source that f500.php8 re-adds
+      ansible.builtin.file:
+        # Exactly the file f500.php8 / apt_repository writes. Not
+        # php_sury_repo_other_files: that list also holds /etc/apt/sources.list,
+        # and deleting Debian's own source list would leave the box with no
+        # repository at all.
+        path: /etc/apt/sources.list.d/packages_sury_org_php.list
+        state: absent
 
 - name: Production roles
   hosts: "production"

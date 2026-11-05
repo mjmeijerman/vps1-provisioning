@@ -6,6 +6,44 @@ Provisioning for `vps1.markmeijerman.nl`.
 
 Requires the vault password for `group_vars/production/*_secure.yml`.
 
+
+## Vault
+
+The password lives in one file outside the repository:
+
+    install -m 600 /dev/null ~/.ansible/vault-pass-vps1
+    # then put the password in it, on one line
+
+`make provision-prod` uses that file when it exists and falls back to
+`--ask-vault-pass` when it does not, so a machine without it still works. The
+test suite and the CI checks never need it. Nothing in this repository may ever
+contain the password itself: it decrypts the DKIM key and the database
+credentials.
+
+Extra arguments go through untouched:
+
+    make provision-prod ARGS="--limit vps1 -vv"
+    make provision-prod-dry        # reports changes, changes nothing
+
+
+## Speed
+
+Every run prints its slowest tasks when it ends (`profile_tasks` in
+`ansible.cfg`). Read that list before optimising anything.
+
+What is already in place, so nobody re-does it:
+
+- **SSH multiplexing.** One connection for the whole play instead of one per
+  task; there are 253 tasks.
+- **Fact caching.** Cached for 30 minutes in `.ansible/facts`, so a second run in
+  that window skips both fact gathers.
+- **`f500.debian` runs once.** It was listed twice in `playbook.yml`.
+- **`cache_valid_time` on every apt task.** A run with no repository change no
+  longer re-downloads the indexes.
+- **One deb.sury.org source.** `f500.php8` adds an unsigned second one after
+  `php_sury_repo` has cleaned up; the playbook now deletes it again, which also
+  silences apt's "configured multiple times" warning.
+
 Checks that need no vault, and no host:
 
     make lint            # ansible-lint, our own files only
