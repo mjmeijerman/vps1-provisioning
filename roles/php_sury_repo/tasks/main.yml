@@ -54,3 +54,10 @@
     msg: "apt cache refresh requested"
   changed_when: php_sury_repo_source is changed
   notify: Refresh the apt cache
+
+# Run the handler here, not at the end of the play: f500.php8 comes later in
+# this play and asks apt for packages that only exist in this repository. On
+# this box the MariaDB and nginx repository tasks happened to refresh the index
+# in between, which is luck, not order.
+- name: Refresh the apt cache now
+  ansible.builtin.meta: flush_handlers

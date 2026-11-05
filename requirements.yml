@@ -1,19 +1,8 @@
 ---
-# Roles. `make update-ansible-roles` installs these into roles-galaxy/.
+# Collections only. Every role is vendored in roles/ now: each one needed a
+# change a Galaxy install would have erased, and an unattended
+# "make update-collections" should never be able to undo one of them.
 #
-# Versions are pinned: without them ansible-galaxy resolves to whatever the
-# newest tag is and quietly upgrades a role under a playbook that was written
-# against an older one. Bump deliberately.
-#
-# The nine f500.* roles used to live here. They are vendored into roles/ now:
-# every one of them needed changes that a galaxy install would have overwritten,
-# and roles/ is the place this repository owns.
-roles:
-  - src: HanXHX.mysql
-    version: 2.2.1
-  - src: geerlingguy.certbot
-    version: 5.1.0
-
 # ansible.posix supplies authorized_key and acl. ansible.mysql is the successor
 # of community.mysql, whose modules HanXHX.mysql calls: community.mysql is
 # deprecated and goes away in 6.0.0, and it pulls ansible.mysql in as a

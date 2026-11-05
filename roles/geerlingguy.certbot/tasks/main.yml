@@ -1,0 +1,41 @@
+---
+- name: Load the distribution specific variables
+  ansible.builtin.import_tasks: include-vars.yml
+
+- name: Set up the RPM repositories
+  ansible.builtin.import_tasks: setup-RedHat.yml
+  when: ansible_os_family == 'RedHat'
+
+- name: Install Certbot from the distribution package
+  ansible.builtin.import_tasks: install-with-package.yml
+  when: certbot_install_method == 'package'
+
+- name: Install Certbot from snap
+  ansible.builtin.import_tasks: install-with-snap.yml
+  when: certbot_install_method == 'snap'
+
+- name: Install Certbot from source
+  ansible.builtin.import_tasks: install-from-source.yml
+  when: certbot_install_method == 'source'
+
+- name: Create the certificates in standalone mode
+  ansible.builtin.include_tasks: create-cert-standalone.yml
+  loop: "{{ certbot_certs }}"
+  loop_control:
+    loop_var: cert_item
+  when:
+    - certbot_create_if_missing
+    - certbot_create_method == 'standalone'
+
+- name: Create the certificates with the webroot method
+  ansible.builtin.include_tasks: create-cert-webroot.yml
+  loop: "{{ certbot_certs }}"
+  loop_control:
+    loop_var: cert_item
+  when:
+    - certbot_create_if_missing
+    - certbot_create_method == 'webroot'
+
+- name: Schedule the renewal
+  ansible.builtin.import_tasks: renew-cron.yml
+  when: certbot_auto_renew

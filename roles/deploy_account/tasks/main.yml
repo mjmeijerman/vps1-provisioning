@@ -1,0 +1,63 @@
+---
+# The account and the SSH material a deploy needs, created in the first play.
+#
+# This used to live in the webserver role, which runs in the second play, after
+# install_docker had already added `deploy` to the docker group, created its
+# application directories and cloned the repositories over SSH as that user. On
+# a box where the account already existed that worked; on a fresh machine it
+# stops at "usermod: user 'deploy' does not exist".
+#
+# github.com's host key goes in here too, for the same reason: the clone in
+# install_docker is the first thing that touches it.
+
+- name: Add github.com to known_hosts file
+  ansible.builtin.lineinfile:
+    dest: /etc/ssh/ssh_known_hosts
+    line: "{{ lookup('pipe', 'ssh-keyscan github.com') }}"
+    state: present
+    create: true
+    mode: "0644"
+
+- name: Create deploy user
+  ansible.builtin.user:
+    name: "{{ deploy_user }}"
+    # append is not optional here. Without it this task sets the group list to
+    # exactly [www-data] and silently drops every other membership, including
+    # the docker group install_docker added — which is why deploys kept failing
+    # on a docker.sock permission error after a provisioning run.
+    groups: www-data
+    append: true
+    shell: /bin/bash
+    state: present
+    password: "$6$rounds=100000$Ma2q.iH0Aj6l3SAp$oYVMw4G0AOoCTiLEews.B7DEYAtg39JQg8y2dUx8zVsL22/rVK6KatHvUGrl/PYZUIghg1ic9/TkB7loCTznO1"
+
+- name: Add personal authorized key to deploy user
+  ansible.posix.authorized_key:
+    user: "{{ deploy_user }}"
+    key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
+    state: present
+
+- name: Add deploy user SSH key
+  ansible.builtin.copy:
+    content: "{{ deploy_user_private_key }}"
+    dest: "/home/{{ deploy_user }}/.ssh/id_rsa"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0600"
+
+- name: Add deploy user SSH public_key
+  ansible.builtin.copy:
+    content: "{{ deploy_user_public_key }}"
+    dest: "/home/{{ deploy_user }}/.ssh/id_rsa.pub"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0600"
+
+- name: Write sudoers for user
+  ansible.builtin.template:
+    src: sudoers.j2
+    dest: "/etc/sudoers.d/{{ deploy_user }}"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: "visudo -cf %s"

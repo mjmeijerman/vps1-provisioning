@@ -1,0 +1,137 @@
+---
+
+# -------------------------------------
+# Setup
+# -------------------------------------
+mariadb_origin: 'default'
+mariadb_notify_restart: true
+
+# -------------------------------------
+# Configuration
+# -------------------------------------
+
+# MariaDB connection settings.
+mariadb_port: "3306"
+mariadb_bind_address: '127.0.0.1'
+mariadb_datadir: '/var/lib/mysql'
+mariadb_pid_file: '/run/mysqld/mysqld.pid'
+mariadb_socket: '/run/mysqld/mysqld.sock'
+
+# Slow query log settings.
+mariadb_slow_query_log_enabled: false
+mariadb_slow_query_log_file: '/var/log/mysql/mysql_slow.log'
+mariadb_slow_query_time: 2
+
+# Memory settings (default values optimized ~512MB RAM).
+# Fine Tuning
+mariadb_key_buffer_size: '256M'
+mariadb_max_allowed_packet: '64M'
+mariadb_max_connections: 100
+
+mariadb_table_open_cache: '2000'
+mariadb_sort_buffer_size: '2M'
+mariadb_read_buffer_size: '1M'
+mariadb_read_rnd_buffer_size: '2M'
+mariadb_myisam_sort_buffer_size: '128M'
+mariadb_thread_cache_size: '256'
+mariadb_query_cache_size: '16M'
+
+# Other settings.
+mariadb_wait_timeout: 28800
+
+# InnoDB settings.
+mariadb_innodb_buffer_pool_size: "{{ (ansible_memtotal_mb * 0.2) | round | int }}M"
+# Changing this on a running system breaks it:
+# http://dev.mysql.com/doc/refman/5.6/en/innodb-data-log-reconfiguration.html
+mariadb_innodb_log_file_size: "64M"
+mariadb_innodb_log_buffer_size: '8M'
+mariadb_innodb_flush_log_at_trx_commit: '1'
+mariadb_innodb_lock_wait_timeout: 50
+
+# Logging settings.
+mariadb_log_error: '/var/log/mysql/mysql_error.log'
+mariadb_syslog_tag: 'mysql'
+
+# mysqldump settings.
+mariadb_mysqldump_max_allowed_packet: '64M'
+
+# -------------------------------------
+# Extra configuration
+# -------------------------------------
+#
+mariadb_extra_configuration: {}
+
+# Example:
+# mariadb_extra_configuration:
+#   'innodb_awsome_feature': 1
+
+# -------------------------------------
+# Replication
+# -------------------------------------
+mariadb_replication_master: false
+mariadb_replication_slave: false
+# This formula don't work with vagrant! All boxes have same default ip!
+mariadb_server_id: "{{ ansible_default_ipv4.address | ipaddr('int') }}"
+
+mariadb_replication_user: 'repl'
+mariadb_replication_password: 'change_me_NOW'
+mariadb_replication_host: '192.168.0.1'
+mariadb_replication_port: '3306'
+
+mariadb_backup_dir: '/var/backups/tmp-mysql'
+
+mariadb_service_name: '{{ mariadb_default_service_name if mariadb_origin == "default" else "mariadb" }}'
+
+# Master
+mariadb_max_binlog_size: "100M"
+mariadb_expire_logs_days: "10"
+
+#
+# Slave
+#
+mariadb_slave_readonly: true
+# Import data from
+mariadb_slave_import_data: true
+# host used to create a backup (can be the master or another slave) - default: use the master
+mariadb_slave_import_from: "{{ mariadb_replication_host }}"
+# Delete dump after slave configuration (set false if you have many slaves to install, it avoids to create many dumps)
+mariadb_slave_import_flush_dump: true
+# Don't replicate these DBs/tables
+mariadb_slave_ignore_db: []
+mariadb_slave_ignore_table: []
+# SSH user used to copy data
+mariadb_backup_user: "{{ ansible_user_id }}"     # TODO: change var name
+## If data is already imported, you can specify position
+mariadb_master_log_file: null
+mariadb_master_log_pos: null
+# If true, reconfigure slave
+mariadb_slave_force_setup: false
+mariadb_gtid_domain_id: 1
+
+# -------------------------------------
+# Database / Users
+# -------------------------------------
+mariadb_databases: []
+mariadb_users: []
+
+# -------------------------------------
+# MariaDB Upstream
+# -------------------------------------
+mariadb_upstream_setup_script: 'https://r.mariadb.com/downloads/mariadb_repo_setup'
+mariadb_upstream_version: '10.6'
+
+# -------------------------------------
+# Galera
+# -------------------------------------
+mariadb_galera_resetup: false
+mariadb_wsrep_node_address: false    # Set primary node IP
+mariadb_galera_members: []
+mariadb_galera_primary_node: 'change_me'    # See: https://github.com/ansible/ansible/issues/17453
+mariadb_wsrep_stt_method: 'rsync'
+
+mariadb_galera_package_name: 'galera-4'
+
+# -------------------------------------
+# Debug
+# -------------------------------------
+mariadb_debug_role: false

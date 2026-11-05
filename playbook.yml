@@ -19,6 +19,10 @@
     - f500.memcached
     - f500.php8
     - f500.php_composer
+    # Before install_docker: that role adds this account to the docker group,
+    # creates directories owned by it and clones the repositories as it. It also
+    # needs github.com in known_hosts, which is set up here.
+    - deploy_account
     - install_docker
     - mail_server
     - logging

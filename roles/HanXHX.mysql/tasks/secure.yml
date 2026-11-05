@@ -1,0 +1,16 @@
+---
+# One call, not four. The anonymous user exists once per host entry, and
+# host_all removes every entry for the user at once.
+
+- name: Remove the anonymous users
+  ansible.mysql.mysql_user:
+    name: ''
+    host_all: true
+    state: absent
+    login_unix_socket: "{{ mariadb_socket }}"
+
+- name: Remove the test database
+  ansible.mysql.mysql_db:
+    name: test
+    state: absent
+    login_unix_socket: "{{ mariadb_socket }}"

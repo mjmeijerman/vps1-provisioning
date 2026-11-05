@@ -1,0 +1,22 @@
+---
+
+- name: Install the tool that verifies the repository key
+  ansible.builtin.apt:
+    name: gpg
+    state: present
+  when: mariadb_origin == 'upstream'
+
+- name: Set up the MariaDB repository
+  ansible.builtin.import_tasks: mariadb/upstream.yml
+  when: mariadb_origin == 'upstream'
+
+- name: Install the MariaDB server
+  ansible.builtin.apt:
+    name: mariadb-server
+    state: present
+
+- name: Install the MariaDB tools
+  ansible.builtin.apt:
+    name: "{{ mariadb_tools }}"
+    state: present
+    install_recommends: false

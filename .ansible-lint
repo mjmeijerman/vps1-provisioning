@@ -1,9 +1,7 @@
 ---
-# roles-galaxy/ is downloaded by `make update-ansible-roles` and overwritten on
-# every update, so linting or hand-fixing it is wasted work. Everything we own
-# (playbook.yml, roles/) must stay clean.
+# Everything in this repository is ours now, so everything is linted. Only
+# generated state is skipped.
 exclude_paths:
-  - roles-galaxy/
   - .ansible/
 
 # Vendored roles carry their own callback/config habits; we only care about ours.

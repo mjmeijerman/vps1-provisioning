@@ -1,0 +1,23 @@
+---
+# See: https://github.com/geerlingguy/ansible-role-certbot/issues/107
+- name: Enable the DNF modules Certbot needs
+  when:
+    - ansible_distribution == 'CentOS'
+    - ansible_distribution_major_version | int >= 8
+  block:
+    - name: Install the DNF plugin packages
+      ansible.builtin.dnf:
+        name: dnf-plugins-core
+        state: present
+
+    - name: Enable the repository on CentOS 8.3 and later
+      ansible.builtin.command:
+        cmd: dnf config-manager --set-enabled powertools
+      changed_when: false
+      when: ansible_facts['distribution_version'] is version('8.3', '>=')
+
+    - name: Enable the repository on CentOS 8.0 to 8.2
+      ansible.builtin.command:
+        cmd: dnf config-manager --set-enabled PowerTools
+      changed_when: false
+      when: ansible_facts['distribution_version'] is version('8.2', '<=')
