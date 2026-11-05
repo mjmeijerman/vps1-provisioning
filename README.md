@@ -147,8 +147,9 @@ What the role creates, and why:
 
 One more, for the visit counter in `bakmark/analytics/`: `/var/lib/bakmark-analytics`
 owned by uid 1000, and `/var/lib/bakmark-analytics/data` owned by **uid 70** —
-Postgres inside that image runs as 70, and the parent has to be writable by
-`deploy` so it can write the stack's env file without root. Its vhost,
+Postgres inside that image runs as 70. The stack's env file is *not* here: a
+deploy cannot write into a directory owned by the container's uid, so `deploy.sh`
+keeps it in the checkout next to the app's own. Its vhost,
 `analytics.bakmark.nl`, is an entry in `nginx_server_templates_proxies` like the
 other two, so certbot issues the certificate on the same run.
 
