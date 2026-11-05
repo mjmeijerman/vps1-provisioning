@@ -145,6 +145,16 @@ What the role creates, and why:
   `git reset --hard` in it without root.
 - `deploy` in the `docker` group, so deploys need no password.
 
+One more, for the visit counter in `bakmark/analytics/`: `/var/lib/bakmark-analytics`
+owned by uid 1000, and `/var/lib/bakmark-analytics/data` owned by **uid 70** —
+Postgres inside that image runs as 70, and the parent has to be writable by
+`deploy` so it can write the stack's env file without root. Its vhost,
+`analytics.bakmark.nl`, is an entry in `nginx_server_templates_proxies` like the
+other two, so certbot issues the certificate on the same run.
+
+What that means in practice: provisioning creates the directories and the door;
+the app's `deploy.sh` writes the env file (once) and runs the stack.
+
 Deploying is the application's own script, run by CI or by hand:
 
     # from a checkout of the app
