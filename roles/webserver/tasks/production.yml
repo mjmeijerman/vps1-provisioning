@@ -32,6 +32,21 @@
     mode: "0755"
   loop: "{{ nginx_server_templates_websites | pluck('name') | difference(['defaultssl']) | unique }}"
 
+# A static site is pushed into its directory by the project's own deploy script,
+# as the deploy account, with rsync --delete. So the directory has to exist here
+# first, be owned by that account, and stay readable to nginx (group www-data,
+# with the files arriving world-readable).
+- name: Create static site directories
+  ansible.builtin.file:
+    path: "{{ item.web_root }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ nginx_group }}"
+    mode: "0755"
+  loop: "{{ nginx_server_templates_static | default([]) }}"
+  loop_control:
+    label: "{{ item.name }}"
+
 - name: Add composer file for wordpress cli
   ansible.builtin.template:
     src: "{{ inventory_dir }}/roles/webserver/templates/composer.json.j2"
