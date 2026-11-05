@@ -1,0 +1,17 @@
+---
+# Vendored from the f500.* galaxy role v1.2.0. It lives here because this
+# repository needed changes the published role does not have; see README,
+# "Roles we own".
+galaxy_info:
+  role_name: "bashrc"
+  author: "Jasper N. Brouwer, Ramon de la Fuente"
+  description: "Install a bash profile for root, the skeleton and the listed users."
+  company: Future500
+  license: LGPL-3.0
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+  galaxy_tags: []
+dependencies: []

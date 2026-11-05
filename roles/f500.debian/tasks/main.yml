@@ -1,0 +1,40 @@
+---
+# Debian baseline: a fresh apt cache once per run, the backports source, and the
+# few packages every later role assumes.
+
+- name: Refresh the apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: "{{ debian_cache_valid_time }}"
+  when: debian_cache_update | bool
+
+# One apt call for all of them, not three. An apt module run costs about two
+# seconds here even when it installs nothing.
+- name: Install the baseline packages
+  ansible.builtin.apt:
+    name: "{{ debian_baseline_packages }}"
+    state: present
+  vars:
+    debian_baseline_packages: >-
+      {{ ['curl', python_package ~ '-pycurl', debian_python_configparser]
+         | select('string') | list }}
+
+- name: Add the backports repository
+  ansible.builtin.apt_repository:
+    repo: "deb http://{{ debian_repo_url }}/debian {{ debian_codename }}-backports main"
+    state: present
+    update_cache: false
+
+- name: Add the backports source repository
+  ansible.builtin.apt_repository:
+    repo: "deb-src http://{{ debian_repo_url }}/debian {{ debian_codename }}-backports main"
+    state: present
+    update_cache: true
+
+- name: Write inputrc
+  ansible.builtin.copy:
+    src: inputrc
+    dest: /etc/inputrc
+    owner: root
+    group: root
+    mode: "0644"

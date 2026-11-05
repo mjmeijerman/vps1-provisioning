@@ -1,0 +1,13 @@
+---
+
+- name: Restart Apache
+  ansible.builtin.service:
+    name: apache2
+    state: restarted
+  when: php8_enable_apache | bool
+
+- name: Restart PHP FPM
+  ansible.builtin.service:
+    name: "php{{ php8_version }}-fpm"
+    state: restarted
+  when: php8_enable_fpm | bool

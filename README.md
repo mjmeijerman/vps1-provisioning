@@ -31,18 +31,27 @@ Extra arguments go through untouched:
 Every run prints its slowest tasks when it ends (`profile_tasks` in
 `ansible.cfg`). Read that list before optimising anything.
 
-What is already in place, so nobody re-does it:
+A full run went from 365s to 168s. What that took, so nobody re-does it:
 
 - **SSH multiplexing.** One connection for the whole play instead of one per
-  task; there are 253 tasks.
+  task; there are 245 of them.
 - **Fact caching.** Cached for 30 minutes in `.ansible/facts`, so a second run in
   that window skips both fact gathers.
+- **No `stat` on a 2 GB file.** The module hashes the file to report a checksum
+  by default, and `/swapfile` takes eight seconds to hash. `get_checksum: false`
+  where nothing reads the checksum.
+- **The firewall is applied only where it differs.** Every `ufw` call that
+  changes the ruleset rewrites the whole iptables set, and the
+  `community.general.ufw` module runs four extra subprocesses per rule, so five
+  unchanged rules cost 13 seconds and reloaded the firewall for a no-op.
+- **The vim alternatives are one shell run**, not eight module calls that mostly
+  change nothing.
+- **One deb.sury.org source.** `f500.php8` used to add an unsigned second one
+  after `php_sury_repo` had cleaned up, so apt read the repository twice and
+  warned on every call.
 - **`f500.debian` runs once.** It was listed twice in `playbook.yml`.
-- **`cache_valid_time` on every apt task.** A run with no repository change no
-  longer re-downloads the indexes.
-- **One deb.sury.org source.** `f500.php8` adds an unsigned second one after
-  `php_sury_repo` has cleaned up; the playbook now deletes it again, which also
-  silences apt's "configured multiple times" warning.
+- **`cache_valid_time` on every apt task**, and one apt call where a role used to
+  make three.
 
 Checks that need no vault, and no host:
 
@@ -62,6 +71,25 @@ Checks that need no vault, and no host:
 `roles-galaxy/` is downloaded by `make update-ansible-roles` and is overwritten
 on every update. Fixes that have to survive belong in `roles/` or in
 `group_vars/`, not there.
+
+
+## Roles we own
+
+The nine `f500.*` roles used to come from Galaxy. They are vendored into
+`roles/` now, because every one of them needed changes the published role does
+not have, and `make update-ansible-roles` would have overwritten them. Their
+`meta/main.yml` names the version each was taken from.
+
+`roles-galaxy/` still holds `HanXHX.mysql`, `geerlingguy.certbot` and
+`geerlingguy.daemonize`, which nothing here has had to change.
+
+Two of the vendored roles are worth knowing about before editing them:
+
+- `f500.ufw` applies the rules with a shell script that asks `ufw --dry-run`
+  first, instead of the `ufw` module per rule. It is the only role here that can
+  lock you out of the box, so run it on its own if you change it.
+- `f500.php8` deliberately does **not** add the deb.sury.org repository:
+  `php_sury_repo` owns that, with a signed-by keyring.
 
 
 ## Docker applications

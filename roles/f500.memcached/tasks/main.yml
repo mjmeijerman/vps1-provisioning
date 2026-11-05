@@ -1,0 +1,43 @@
+---
+
+- name: Install memcached
+  ansible.builtin.apt:
+    name: memcached
+    state: present
+
+- name: Write the memcached configuration
+  ansible.builtin.template:
+    src: memcached.conf.j2
+    dest: /etc/memcached.conf
+    owner: root
+    group: root
+    mode: "0644"
+  when: memcached_servers is undefined
+  notify: Restart memcached
+
+- name: Write the configuration of each instance
+  ansible.builtin.template:
+    src: memcached_servers.conf.j2
+    dest: "/etc/memcached_{{ item.name }}.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ memcached_servers | default([]) }}"
+  when: memcached_servers is defined
+  notify: Restart memcached
+
+- name: Write the init script
+  ansible.builtin.copy:
+    src: memcached
+    dest: /etc/init.d/memcached
+    owner: root
+    group: root
+    mode: "0755"
+  notify: Restart memcached
+
+- name: Enable and start memcached
+  ansible.builtin.service:
+    name: memcached
+    enabled: true
+    state: started
+  register: memcached_started

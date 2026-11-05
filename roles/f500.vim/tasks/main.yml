@@ -1,0 +1,36 @@
+---
+# vim for everything that asks for an editor.
+#
+# The eight alternatives are set in one shell run. The alternatives module costs
+# half a second per item, and seven of the eight never change anything, which
+# made this the fourth slowest task in the playbook.
+
+- name: Install vim
+  ansible.builtin.apt:
+    name: vim
+    state: present
+
+- name: Write the system vimrc
+  ansible.builtin.copy:
+    src: vimrc
+    dest: /etc/vim/vimrc
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Point the editor alternatives at vim.basic
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      set -u
+      for name in {{ vim_alternatives | join(' ') }}; do
+          current="$(update-alternatives --query "$name" 2>/dev/null | sed -n 's/^Value: //p')"
+          if [ "$current" != /usr/bin/vim.basic ]; then
+              update-alternatives --set "$name" /usr/bin/vim.basic
+              echo "applied: $name"
+          fi
+      done
+      exit 0
+    executable: /bin/bash
+  register: vim_alternatives_state
+  changed_when: "'applied: ' in vim_alternatives_state.stdout"

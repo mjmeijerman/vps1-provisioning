@@ -4,25 +4,11 @@
 # Versions are pinned: without them ansible-galaxy resolves to whatever the
 # newest tag is and quietly upgrades a role under a playbook that was written
 # against an older one. Bump deliberately.
+#
+# The nine f500.* roles used to live here. They are vendored into roles/ now:
+# every one of them needed changes that a galaxy install would have overwritten,
+# and roles/ is the place this repository owns.
 roles:
-  - src: f500.debian
-    version: v2.3.0
-  - src: f500.bashrc
-    version: v1.2.0
-  - src: f500.locale
-    version: v1.1.0
-  - src: f500.nginx
-    version: v3.8.0
-  - src: f500.php8
-    version: v1.0.0
-  - src: f500.php_composer
-    version: v2.4.1
-  - src: f500.memcached
-    version: v2.0.4
-  - src: f500.ufw
-    version: v4.1.0
-  - src: f500.vim
-    version: v1.1.1
   - src: HanXHX.mysql
     version: 2.2.1
   - src: geerlingguy.certbot

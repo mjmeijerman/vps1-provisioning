@@ -1,0 +1,6 @@
+---
+
+- name: Run locale-gen
+  ansible.builtin.command:
+    cmd: locale-gen
+  changed_when: true
