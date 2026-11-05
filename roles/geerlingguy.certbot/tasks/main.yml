@@ -1,7 +1,4 @@
 ---
-- name: Load the distribution specific variables
-  ansible.builtin.import_tasks: include-vars.yml
-
 - name: Set up the RPM repositories
   ansible.builtin.import_tasks: setup-RedHat.yml
   when: ansible_os_family == 'RedHat'
