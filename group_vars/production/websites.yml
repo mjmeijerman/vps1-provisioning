@@ -22,10 +22,15 @@ nginx_server_templates_proxies:
       # script-src and connect-src name it. Without this the promise is in the
       # HTML and the browser quietly refuses to run it, which looks exactly like
       # a quiet week in the dashboard.
+      #
+      # frame-src is the video embed: without it default-src applies, the browser
+      # blocks the iframe, and YouTube shows "this content is blocked. Contact
+      # the site owner" inside the player. The recipe pages carry that player.
       Content-Security-Policy: >-
         default-src 'self'; script-src 'self' 'unsafe-inline' {{ analytics_origin }};
         style-src 'self' 'unsafe-inline'; img-src 'self' data:;
         connect-src 'self' {{ analytics_origin }};
+        frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com;
         font-src 'self'; frame-ancestors 'none'; base-uri 'self'
       X-Content-Type-Options: nosniff
       Referrer-Policy: no-referrer
@@ -38,12 +43,13 @@ nginx_server_templates_proxies:
     proxy_pass: "127.0.0.1:{{ bakmark_staging_port }}"
     headers:
       # The theme toggle runs from an inline <script is:inline> in the layout,
-      # so script-src needs 'unsafe-inline'. The visit counter is the only other
-      # origin allowed; everything else stays closed.
+      # so script-src needs 'unsafe-inline'. The visit counter and the video
+      # embed are the only other origins allowed; everything else stays closed.
       Content-Security-Policy: >-
         default-src 'self'; script-src 'self' 'unsafe-inline' {{ analytics_origin }};
         style-src 'self' 'unsafe-inline'; img-src 'self' data:;
         connect-src 'self' {{ analytics_origin }};
+        frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com;
         font-src 'self'; frame-ancestors 'none'; base-uri 'self'
       X-Content-Type-Options: nosniff
       Referrer-Policy: no-referrer
