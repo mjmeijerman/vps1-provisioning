@@ -120,14 +120,18 @@ nginx_server_templates_static:
     try_files_fallback: "$uri/ =404"
     headers:
       # A static game: index.html plus its own ES modules under src/. No CDN, no
-      # webfonts, no calls out. script-src stays 'self' without 'unsafe-inline'
-      # because the HTML inlines no script; style-src does carry 'unsafe-inline'
-      # because the game sets style attributes on its elements from JS, and that
-      # is inline style as far as the browser is concerned. WebAudio makes its
-      # own sound, so no media-src and nothing to allow there.
+      # webfonts. script-src stays 'self' without 'unsafe-inline' because the HTML
+      # inlines no script; style-src does carry 'unsafe-inline' because the game
+      # sets style attributes on its elements from JS, and that is inline style as
+      # far as the browser is concerned. WebAudio makes its own sound, so no
+      # media-src and nothing to allow there.
+      # Umami analytics is cookieless and lives on its own origin, so it needs the
+      # script (from analytics.bakmark.nl) and the pageview POST it sends back to
+      # /api/send on that same origin: two directives, nothing else.
       Content-Security-Policy: >-
-        default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';
-        img-src 'self' data:; connect-src 'self'; font-src 'self';
+        default-src 'self'; script-src 'self' https://analytics.bakmark.nl;
+        style-src 'self' 'unsafe-inline'; img-src 'self' data:;
+        connect-src 'self' https://analytics.bakmark.nl; font-src 'self';
         frame-ancestors 'none'; base-uri 'self'
       X-Content-Type-Options: nosniff
       Referrer-Policy: no-referrer
