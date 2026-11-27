@@ -85,6 +85,7 @@ nginx_server_templates_proxies:
 # a site's directory (then download core into it) whenever wp-config.php is
 # absent, which would wipe one of these on every provision.
 escape_root: "{{ websites_root }}/escape"
+survivors_root: "{{ websites_root }}/survivors"
 
 nginx_server_templates_static:
   - name: escape
@@ -103,6 +104,31 @@ nginx_server_templates_static:
         default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';
         img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self' data:;
         connect-src 'self'; frame-ancestors 'none'; base-uri 'self'
+      X-Content-Type-Options: nosniff
+      Referrer-Policy: no-referrer
+      X-Frame-Options: DENY
+
+  - name: survivors
+    domains:
+      - "survivors.markmeijerman.eu"
+    src: "{{ inventory_dir }}/roles/webserver/templates/https.conf.j2"
+    index: index.html
+    web_root: "{{ survivors_root }}"
+    # The files arrive with the game's own deploy, so until then the directory is
+    # empty. Answering that with 404 says "no files yet"; the shared SPA fallback
+    # would answer 500, because it redirects to an index.html that is not there.
+    try_files_fallback: "$uri/ =404"
+    headers:
+      # A static game: index.html plus its own ES modules under src/. No CDN, no
+      # webfonts, no calls out. script-src stays 'self' without 'unsafe-inline'
+      # because the HTML inlines no script; style-src does carry 'unsafe-inline'
+      # because the game sets style attributes on its elements from JS, and that
+      # is inline style as far as the browser is concerned. WebAudio makes its
+      # own sound, so no media-src and nothing to allow there.
+      Content-Security-Policy: >-
+        default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';
+        img-src 'self' data:; connect-src 'self'; font-src 'self';
+        frame-ancestors 'none'; base-uri 'self'
       X-Content-Type-Options: nosniff
       Referrer-Policy: no-referrer
       X-Frame-Options: DENY
