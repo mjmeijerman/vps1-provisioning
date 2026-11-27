@@ -36,7 +36,7 @@ server {
     {% endfor %}
 
     location / {
-        try_files $uri /{{ item.index }}$is_args$args;
+        try_files $uri {{ item.try_files_fallback | default('/' ~ item.index ~ '$is_args$args') }};
     }
 
     location ~ \.php$ {
